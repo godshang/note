@@ -1,5 +1,5 @@
 module.exports = {
-    title: '开发者笔记',
+    title: 'Java开发笔记',
     description: '',
     port: 4000,
     base: '/note/',
@@ -10,7 +10,7 @@ module.exports = {
         nav: [
             { text: 'Home', link: '/' },
             { text: 'Java', items: [
-                { text: 'Java基础', link: '/java/basic/Basic' },
+                { text: 'Java基础', link: '/java/base/Basic' },
                 { text: 'Java集合框架', link: '/java/collection/ArrayList' },
                 { text: 'Java并发编程', link: '/java/concurrent/Thread' },
                 { text: 'JVM相关', link: '/java/jvm/Memory' },
@@ -36,12 +36,16 @@ module.exports = {
                     sidebarDepth: 0,
                     children: [
                         {
-                            title: 'Java基础知识',
-                            path: '/java/basic/Basic',
+                            title: 'Java基础-知识点',
+                            path: '/java/base/Basic',
                         },
                         {
-                            title: '代理',
-                            path: '/java/basic/Proxy'
+                            title: 'Java基础-面向对象',
+                            path: '/java/base/Oop',
+                        },
+                        {
+                            title: 'Java基础-代理',
+                            path: '/java/base/Proxy'
                         }
                     ]
                 },

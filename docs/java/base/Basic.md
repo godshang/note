@@ -1,4 +1,8 @@
-## Java基本数据类型
+# 知识点
+
+## 数据类型
+
+### Java基本数据类型
 
 
 | **名称** | **字节** | **最小值**       | **最大值**              | **描述**                     |
@@ -11,6 +15,212 @@
 | double   | 8        |                  |                         | 64位IEEE 754标准下的浮点数据 |
 | boolean  | 1bit     |                  |                         |                              |
 | char     | 2        | '\\u0000' (或 0) | '\\uffff' (或 65，535 ) | 16 位 Unicode 标准下的字符   |
+
+### 缓存池
+
+new Integer(123) 与 Integer.valueOf(123) 的区别在于：
+
+* new Integer(123) 每次都会新建一个对象
+* Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。
+
+valueOf() 方法的实现比较简单，就是先判断值是否在缓存池中，如果在的话就直接返回缓存池的内容。
+
+```java
+public static Integer valueOf(int i) {
+    if (i >= IntegerCache.low && i <= IntegerCache.high)
+        return IntegerCache.cache[i + (-IntegerCache.low)];
+    return new Integer(i);
+}
+```
+
+在 Java 8 中，Integer 缓存池的大小默认为 -128~127。
+
+```java
+static final int low = -128;
+static final int high;
+static final Integer cache[];
+
+static {
+    // high value may be configured by property
+    int h = 127;
+    String integerCacheHighPropValue =
+        sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
+    if (integerCacheHighPropValue != null) {
+        try {
+            int i = parseInt(integerCacheHighPropValue);
+            i = Math.max(i, 127);
+            // Maximum array size is Integer.MAX_VALUE
+            h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
+        } catch( NumberFormatException nfe) {
+            // If the property cannot be parsed into an int, ignore it.
+        }
+    }
+    high = h;
+
+    cache = new Integer[(high - low) + 1];
+    int j = low;
+    for(int k = 0; k < cache.length; k++)
+        cache[k] = new Integer(j++);
+
+    // range [-128, 127] must be interned (JLS7 5.1.7)
+    assert IntegerCache.high >= 127;
+}
+```
+
+编译器会在缓冲池范围内的基本类型自动装箱过程调用 valueOf() 方法，因此多个 Integer 实例使用自动装箱来创建并且值相同，那么就会引用相同的对象。
+
+```java
+Integer m = 123;
+Integer n = 123;
+System.out.println(m == n); // true
+```
+
+基本类型对应的缓冲池如下：
+
+* boolean values true and false
+* all byte values
+* short values between -128 and 127
+* int values between -128 and 127
+* char in the range \u0000 to \u007F
+
+## String
+
+String 被声明为 final，因此它不可被继承。
+
+内部使用 char 数组存储数据，该数组被声明为 final，这意味着 value 数组初始化之后就不能再引用其它数组。并且 String 内部没有改变 value 数组的方法，因此可以保证 String 不可变。
+
+### 不可变的好处：
+
+1. 可以缓存 hash 值
+
+因为 String 的 hash 值经常被使用，例如 String 用做 HashMap 的 key。不可变的特性可以使得 hash 值也不可变，因此只需要进行一次计算。
+
+2. String Pool 的需要
+
+如果一个 String 对象已经被创建过了，那么就会从 String Pool 中取得引用。只有 String 是不可变的，才可能使用 String Pool。
+
+3. 安全性
+
+String 经常作为参数，String 不可变性可以保证参数不可变。例如在作为网络连接参数的情况下如果 String 是可变的，那么在网络连接过程中，String 被改变，改变 String 对象的那一方以为现在连接的是其它主机，而实际情况却不一定是。
+
+4. 线程安全
+
+String 不可变性天生具备线程安全，可以在多个线程中安全地使用。
+
+### String, StringBuffer and StringBuilder
+
+1. 可变性
+
+* String 不可变
+* StringBuffer 和 StringBuilder 可变
+
+2. 线程安全
+
+* String 不可变，因此是线程安全的
+* StringBuilder 不是线程安全的
+* StringBuffer 是线程安全的，内部使用 synchronized 进行同步
+
+### String.intern()
+
+使用 String.intern() 可以保证相同内容的字符串变量引用同一的内存对象。
+
+下面示例中，s1 和 s2 采用 new String() 的方式新建了两个不同对象，而 s3 是通过 s1.intern() 方法取得一个对象引用。intern() 首先把 s1 引用的对象放到 String Pool(字符串常量池)中，然后返回这个对象引用。因此 s3 和 s1 引用的是同一个字符串常量池的对象。
+
+```java
+String s1 = new String("aaa");
+String s2 = new String("aaa");
+System.out.println(s1 == s2);           // false
+String s3 = s1.intern();
+System.out.println(s1.intern() == s3);  // true
+```
+
+如果是采用 "bbb" 这种使用双引号的形式创建字符串实例，会自动地将新建的对象放入 String Pool 中。
+
+```
+String s4 = "bbb";
+String s5 = "bbb";
+System.out.println(s4 == s5);  // true
+```
+
+HotSpot中字符串常量池保存哪里？永久代？方法区还是堆区？
+
+1. 运行时常量池（Runtime Constant Pool）是虚拟机规范中是方法区的一部分，在加载类和结构到虚拟机后，就会创建对应的运行时常量池；而字符串常量池是这个过程中常量字符串的存放位置。所以从这个角度，字符串常量池属于虚拟机规范中的方法区，它是一个逻辑上的概念；而堆区，永久代以及元空间是实际的存放位置。
+2. 不同的虚拟机对虚拟机的规范（比如方法区）是不一样的，只有 HotSpot 才有永久代的概念。
+3. HotSpot也是发展的，由于一些问题的存在，HotSpot考虑逐渐去永久代，对于不同版本的JDK，实际的存储位置是有差异的，具体看如下表格：
+
+|JDK版本    |是否有永久代，字符串常量池放在哪里？                             |方法区逻辑上规范，由哪些实际的部分实现的？                                      |
+|---------|-----------------------------------------------|-----------------------------------------------------------|
+|jdk1.6及之前|有永久代，运行时常量池（包括字符串常量池），静态变量存放在永久代上              |这个时期方法区在HotSpot中是由永久代来实现的，以至于这个时期说方法区就是指永久代                |
+|jdk1.7   |有永久代，但已经逐步“去永久代”，字符串常量池、静态变量移除，保存在堆中；          |这个时期方法区在HotSpot中由永久代（类型信息、字段、方法、常量）和堆（字符串常量池、静态变量）共同实现     |
+|jdk1.8及之后|取消永久代，类型信息、字段、方法、常量保存在本地内存的元空间，但字符串常量池、静态变量仍在堆中|这个时期方法区在HotSpot中由本地内存的元空间（类型信息、字段、方法、常量）和堆（字符串常量池、静态变量）共同实现|
+
+## 访问权限
+
+Java 中有三个访问权限修饰符: private、protected 以及 public，如果不加访问修饰符，表示包级可见。
+
+可以对类或类中的成员(字段以及方法)加上访问修饰符。
+
+* 类可见表示其它类可以用这个类创建实例对象。
+* 成员可见表示其它类可以用这个类的实例对象访问到该成员。
+
+protected 用于修饰成员，表示在继承体系中成员对于子类可见，但是这个访问修饰符对于类没有意义。
+
+设计良好的模块会隐藏所有的实现细节，把它的 API 与它的实现清晰地隔离开来。模块之间只通过它们的 API 进行通信，一个模块不需要知道其他模块的内部工作情况，这个概念被称为信息隐藏或封装。因此访问权限应当尽可能地使每个类或者成员不被外界访问。
+
+如果子类的方法重写了父类的方法，那么子类中该方法的访问级别不允许低于父类的访问级别。这是为了确保可以使用父类实例的地方都可以使用子类实例，也就是确保满足里氏替换原则。
+
+## 抽象类和接口
+
+1. 抽象类
+
+抽象类和抽象方法都使用 abstract 关键字进行声明。抽象类一般会包含抽象方法，抽象方法一定位于抽象类中。
+
+抽象类和普通类最大的区别是，抽象类不能被实例化，需要继承抽象类才能实例化其子类。
+
+2. 接口
+
+接口是抽象类的延伸，在 Java 8 之前，它可以看成是一个完全抽象的类，也就是说它不能有任何的方法实现。
+
+从 Java 8 开始，接口也可以拥有默认的方法实现，这是因为不支持默认方法的接口的维护成本太高了。在 Java 8 之前，如果一个接口想要添加新的方法，那么要修改所有实现了该接口的类。
+
+接口的成员(字段 + 方法)默认都是 public 的，并且不允许定义为 private 或者 protected。
+
+接口的字段默认都是 static 和 final 的。
+
+3. 比较
+
+* 从设计层面上看，抽象类提供了一种 IS-A 关系，那么就必须满足里式替换原则，即子类对象必须能够替换掉所有父类对象。而接口更像是一种 LIKE-A 关系，它只是提供一种方法实现契约，并不要求接口和实现接口的类具有 IS-A 关系。
+* 从使用上来看，一个类可以实现多个接口，但是不能继承多个抽象类。
+* 接口的字段只能是 static 和 final 类型的，而抽象类的字段没有这种限制。
+* 接口的成员只能是 public 的，而抽象类的成员可以有多种访问权限。
+
+4. 使用选择
+
+使用接口:
+
+* 需要让不相关的类都实现一个方法，例如不相关的类都可以实现 Compareable 接口中的 compareTo() 方法；
+* 需要使用多重继承。
+
+使用抽象类:
+
+* 需要在几个相关的类中共享代码。
+* 需要能控制继承来的成员的访问权限，而不是都为 public。
+* 需要继承非静态和非常量字段。
+
+在很多情况下，接口优先于抽象类，因为接口没有抽象类严格的类层次结构要求，可以灵活地为一个类添加行为。并且从 Java 8 开始，接口也可以有默认的方法实现，使得修改接口的成本也变的很低。
+
+## static初始化顺序
+
+静态变量和静态语句块优先于实例变量和普通语句块，静态变量和静态语句块的初始化顺序取决于它们在代码中的顺序。
+
+存在继承的情况下，初始化顺序为：
+
+* 父类(静态变量、静态语句块)
+* 子类(静态变量、静态语句块)
+* 父类(实例变量、普通语句块)
+* 父类(构造函数)
+* 子类(实例变量、普通语句块)
+* 子类(构造函数)
 
 ## equals方法和hashCode方法
 
