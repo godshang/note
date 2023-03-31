@@ -1,5 +1,5 @@
 module.exports = {
-    title: 'Java开发笔记',
+    title: '开发者笔记',
     description: '',
     port: 4000,
     base: '/note/',
@@ -12,7 +12,7 @@ module.exports = {
             { text: 'Java', items: [
                 { text: 'Java基础', link: '/java/base/Basic' },
                 { text: 'Java集合框架', link: '/java/collection/ArrayList' },
-                { text: 'Java并发编程', link: '/java/concurrent/Thread' },
+                { text: 'Java并发编程', link: '/java/concurrent/Theory' },
                 { text: 'JVM相关', link: '/java/jvm/Memory' },
                 { text: 'Java NIO相关', link: '/java/nio/IO' },
             ] },
@@ -25,11 +25,17 @@ module.exports = {
                 { text: 'Spring', link: '/framework/spring/Spring_Basic' },
                 { text: 'Netty', link: '/framework/netty/Netty_BusinessLogic' },
             ] },
-            { text: '架构', link: '/arch/Rate_Limiter' },
+            { text: '架构', items: [
+                { text: '系统设计', link: '/arch/system_design/01_Scale_From_Zero' },
+                { text: '案例', link: '/arch/case_study/Rate_Limiter' },
+            ] },
             // { text: 'Kubernetes', link: '/kubernetes/01_intro' },
+            { text: '其他', items: [
+                { text: '证券从业资格考试', link: '/other/sac/01' },
+            ] },
         ],
         sidebar: {
-            '/java/': [
+            '/java/base/': [
                 {
                     title: 'Java基础',
                     collapsable: false,
@@ -48,10 +54,11 @@ module.exports = {
                             path: '/java/base/Proxy'
                         }
                     ]
-                },
+                }
+            ],
+            '/java/collection/': [
                 {
                     title: 'Java集合框架',
-                    path: '/java/collection/',
                     collapsable: false,
                     sidebarDepth: 0,
                     children: [
@@ -100,18 +107,24 @@ module.exports = {
                             path: '/java/collection/LinkedHashSet',
                         }
                     ]
-                },
+                }
+            ],
+            '/java/concurrent/': [
                 {
                     title: 'Java并发编程',
                     collapsable: false,
                     sidebarDepth: 0,
                     children: [
                         {
-                            title: 'Java线程',
+                            title: 'Java并发-理论基础',
+                            path: '/java/concurrent/Theory',
+                        },
+                        {
+                            title: 'Java并发-线程',
                             path: '/java/concurrent/Thread',
                         },
                         {
-                            title: 'Java的锁',
+                            title: 'Java并发-锁',
                             path: '/java/concurrent/Lock.md',
                         },
                         {
@@ -143,7 +156,9 @@ module.exports = {
                             path: '/java/concurrent/ThreadLocal',
                         }
                     ]
-                },
+                }
+            ],
+            '/java/jvm/': [
                 {
                     title: 'JVM相关',
                     collapsable: false,
@@ -166,7 +181,9 @@ module.exports = {
                             path: '/java/jvm/Class_Loader',
                         }
                     ]
-                },
+                }
+            ],
+            '/java/nio/': [
                 {
                     title: 'Java NIO相关',
                     collapsable: false,
@@ -187,7 +204,7 @@ module.exports = {
                     ]
                 }
             ],
-            '/storage/': [
+            '/storage/database/': [
                 {
                     title: '数据库',
                     collapsable: false,
@@ -214,7 +231,9 @@ module.exports = {
                             path: '/storage/database/ACID'
                         }
                     ]
-                },
+                }
+            ],
+            '/storage/redis/': [
                 {
                     title: 'Redis详解',
                     collapsable: false,
@@ -257,7 +276,9 @@ module.exports = {
                             path: '/storage/redis/Redis_Scan'
                         }
                     ]
-                },
+                }
+            ],
+            '/storage/mq/': [
                 {
                     title: '消息队列',
                     collapsable: false,
@@ -282,7 +303,7 @@ module.exports = {
                     ]
                 }
             ],
-            '/framework/': [
+            '/framework/spring/': [
                 {
                     title: 'Spring',
                     collapsable: false,
@@ -313,7 +334,9 @@ module.exports = {
                             path: '/framework/spring/Spring_Boot'
                         }
                     ]
-                },
+                }
+            ],
+            '/framework/netty/': [
                 {
                     title: 'Netty',
                     collapsable: false,
@@ -326,42 +349,42 @@ module.exports = {
                     ]
                 }
             ],
-            '/arch/': [
+            '/arch/system_design/': [
                 {
-                    title: '架构基础',
+                    title: '系统设计',
                     collapsable: false,
                     sidebarDepth: 0,
-                    children: [
-                        {
-                            title: '限流',
-                            path: '/arch/Rate_Limiter'
-                        },
-                        {
-                            title: '缓存一致性',
-                            path: '/arch/Cache_Consistency'
-                        },
-                        {
-                            title: '缓存雪崩、缓存穿透、缓存击穿',
-                            path: '/arch/Cache_Avalanche_Cache_Penetration'
-                        },
-                    ]
-                },
+                }
+            ],
+            '/arch/case_study/': [
                 {
                     title: '架构案例',
                     collapsable: false,
                     sidebarDepth: 0,
                     children: [
                         {
+                            title: '限流',
+                            path: '/arch/case_study/Rate_Limiter'
+                        },
+                        {
+                            title: '缓存一致性',
+                            path: '/arch/case_study/Cache_Consistency'
+                        },
+                        {
+                            title: '缓存雪崩、缓存穿透、缓存击穿',
+                            path: '/arch/case_study/Cache_Avalanche_Cache_Penetration'
+                        },
+                        {
                             title: '如何设计一个亿级网关',
-                            path: '/arch/Gateway'
+                            path: '/arch/case_study/Gateway'
                         },
                         {
                             title: '如何设计一个短网址服务',
-                            path: '/arch/Short_Url'
+                            path: '/arch/case_study/Short_Url'
                         },
                         {
                             title: '如何设计一个扣减类服务',
-                            path: '/arch/Deduction'
+                            path: '/arch/case_study/Deduction'
                         },
                     ]
                 }   
@@ -372,6 +395,23 @@ module.exports = {
                     collapsable: false,
                     path: '/kubernetes/01_intro'
                 },
+            ],
+            '/other/sac/': [
+                {
+                    title: '证券从业资格考试',
+                    collapsable: false,
+                    sidebarDepth: 0,
+                    children: [
+                        {
+                            title: '第一章 金融市场体系',
+                            path: '/other/sac/01'
+                        },
+                        {
+                            title: '第二章 中国的金融体系与多层次资本市场',
+                            path: '/other/sac/02'
+                        },
+                    ]
+                }
             ]
         }
     }
