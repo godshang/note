@@ -24,10 +24,14 @@ module.exports = {
             { text: '框架', items: [
                 { text: 'Spring', link: '/framework/spring/Spring_Basic' },
                 { text: 'Netty', link: '/framework/netty/Netty_BusinessLogic' },
+                { text: 'Apollo', link: '/framework/apollo/01' },
             ] },
             { text: '架构', items: [
                 { text: '系统设计', link: '/arch/system_design/01_Scale_From_Zero' },
                 { text: '案例', link: '/arch/case_study/Rate_Limiter' },
+            ] },
+            { text: 'Web3', items: [
+                { text: '北大肖臻《区块链技术与应用》', link: '/web3/blockchain/01' },
             ] },
             // { text: 'Kubernetes', link: '/kubernetes/01_intro' },
             { text: '其他', items: [
@@ -349,6 +353,51 @@ module.exports = {
                     ]
                 }
             ],
+            '/framework/apollo/': [
+                {
+                    title: 'Apollo',
+                    collapsable: false,
+                    sidebarDepth: 0,
+                    children: [
+                        {
+                            title: 'Apollo调试环境搭建',
+                            path: '/framework/apollo/01'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——创建App',
+                            path: '/framework/apollo/create_app'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——创建Cluster',
+                            path: '/framework/apollo/create_cluster'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——创建Namespace',
+                            path: '/framework/apollo/create_appnamespace'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——关联Namespace',
+                            path: '/framework/apollo/create_namespace'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——创建Item',
+                            path: '/framework/apollo/create_item'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——文本变更Item',
+                            path: '/framework/apollo/create_item_by_text'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——发布配置',
+                            path: '/framework/apollo/publish'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——发布ReleaseMessage',
+                            path: '/framework/apollo/release_message'
+                        }
+                    ]
+                }
+            ],
             '/arch/system_design/': [
                 {
                     title: '系统设计',
@@ -388,6 +437,19 @@ module.exports = {
                         },
                     ]
                 }   
+            ],
+            '/web3/blockchain': [
+                {
+                    title: '北大肖臻《区块链技术与应用》',
+                    collapsable: false,
+                    sidebarDepth: 0,
+                    children: [
+                        {
+                            title: '比特币：密码学原理',
+                            path: '/web3/blockchain/01'
+                        },
+                    ]
+                }
             ],
             '/kubernetes/': [
                 {

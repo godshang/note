@@ -12,6 +12,6 @@ features:
   details: 构筑知识体系，提升架构能力
 - title: 分享知识
   details: 送人玫瑰，手有余香
-footer: © 2022
+footer: © 2023
 ---
 
