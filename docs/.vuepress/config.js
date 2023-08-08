@@ -6,6 +6,11 @@ module.exports = {
     plugins: [
         
     ],
+    markdown: {
+        toc: {
+            includeLevel:[1, 2, 3, 4]
+        }
+    },
     themeConfig: {
         nav: [
             { text: 'Home', link: '/' },
@@ -365,35 +370,39 @@ module.exports = {
                         },
                         {
                             title: 'Apollo Portal源码分析——创建App',
-                            path: '/framework/apollo/create_app'
+                            path: '/framework/apollo/portal_create_app'
                         },
                         {
                             title: 'Apollo Portal源码分析——创建Cluster',
-                            path: '/framework/apollo/create_cluster'
+                            path: '/framework/apollo/portal_create_cluster'
                         },
                         {
                             title: 'Apollo Portal源码分析——创建Namespace',
-                            path: '/framework/apollo/create_appnamespace'
+                            path: '/framework/apollo/portal_create_appnamespace'
                         },
                         {
                             title: 'Apollo Portal源码分析——关联Namespace',
-                            path: '/framework/apollo/create_namespace'
+                            path: '/framework/apollo/portal_create_namespace'
                         },
                         {
                             title: 'Apollo Portal源码分析——创建Item',
-                            path: '/framework/apollo/create_item'
+                            path: '/framework/apollo/portal_create_item'
                         },
                         {
                             title: 'Apollo Portal源码分析——文本变更Item',
-                            path: '/framework/apollo/create_item_by_text'
+                            path: '/framework/apollo/portal_create_item_by_text'
                         },
                         {
                             title: 'Apollo Portal源码分析——发布配置',
-                            path: '/framework/apollo/publish'
+                            path: '/framework/apollo/portal_publish'
                         },
                         {
                             title: 'Apollo Portal源码分析——发布ReleaseMessage',
-                            path: '/framework/apollo/release_message'
+                            path: '/framework/apollo/adminservice_send_release_message'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——ConfigService通知配置变更',
+                            path: '/framework/apollo/configservice-notifications'
                         }
                     ]
                 }

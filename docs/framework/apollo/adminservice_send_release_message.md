@@ -1,5 +1,7 @@
 # Apollo Portal源码分析——发送ReleaseMessage
 
+[[toc]]
+
 ## 概述
 
 以下内容来自[Apollo配置中心设计](https://www.apolloconfig.com/#/zh/design/apollo-design)
@@ -255,6 +257,108 @@ public void afterPropertiesSet() throws Exception {
         return releaseMessage == null ? 0 : releaseMessage.getId();
     }
     ```
-3. 调用`executorService.scheduleWithFixedDelay`提交定时任务
+3. 调用`executorService.scheduleWithFixedDelay`提交定时任务，定时任务主要由`scanMissingMessages`和`scanMessages`方法组成
 
-    * `scanMissingMessages`
+### scanMessages
+
+`scanMessages`方法里while循环不断调用`scanAndSendMessages`方法扫描并发送消息，只要还有更多消息且线程未被中断，就一直循环执行
+
+```java
+private void scanMessages() {
+    boolean hasMoreMessages = true;
+    while (hasMoreMessages && !Thread.currentThread().isInterrupted()) {
+      hasMoreMessages = scanAndSendMessages();
+    }
+}
+```
+
+`scanAndSendMessages`方法扫描ReleaseMessage表并回调`ReleaseMessageListener`接口实现
+
+```java
+private boolean scanAndSendMessages() {
+    //current batch is 500
+    List<ReleaseMessage> releaseMessages =
+        releaseMessageRepository.findFirst500ByIdGreaterThanOrderByIdAsc(maxIdScanned);
+    if (CollectionUtils.isEmpty(releaseMessages)) {
+      return false;
+    }
+    fireMessageScanned(releaseMessages);
+    int messageScanned = releaseMessages.size();
+    long newMaxIdScanned = releaseMessages.get(messageScanned - 1).getId();
+    // check id gaps, possible reasons are release message not committed yet or already rolled back
+    if (newMaxIdScanned - maxIdScanned > messageScanned) {
+      recordMissingReleaseMessageIds(releaseMessages, maxIdScanned);
+    }
+    maxIdScanned = newMaxIdScanned;
+    return messageScanned == 500;
+}
+```
+
+1. 扫描时会查询`maxIdScanned`之后按ID升序排序后的前500个ReleaseMessage，500是固定的batch size
+2. 调用`fireMessageScanned`通知所有listener
+    ```java
+    private void fireMessageScanned(Iterable<ReleaseMessage> messages) {
+        for (ReleaseMessage message : messages) {
+            for (ReleaseMessageListener listener : listeners) {
+                try {
+                    listener.handleMessage(message, Topics.APOLLO_RELEASE_TOPIC);
+                } catch (Throwable ex) {
+                    Tracer.logError(ex);
+                    logger.error("Failed to invoke message listener {}", listener.getClass(), ex);
+                }
+            }
+        }
+    }
+    ```
+3. 取查询到的列表的size为`messageScanned`，最后一条记录的ID为`newMaxIdScanned`
+4. 如果`newMaxIdScanned`和`maxIdScanned`的差值大于`messageScanned`，说明查询到的列表不连续、中间存在空洞，可能是ReleaseMessage记录数据库尚未commit或已经回滚，这种情况时调用`recordMissingReleaseMessageIds`方法将中间空洞缺少的ID记录到`missingReleaseMessages`中
+    ```java
+    private void recordMissingReleaseMessageIds(List<ReleaseMessage> messages, long startId) {
+        for (ReleaseMessage message : messages) {
+            long currentId = message.getId();
+            if (currentId - startId > 1) {
+                for (long i = startId + 1; i < currentId; i++) {
+                    missingReleaseMessages.putIfAbsent(i, 1);
+                }
+            }
+            startId = currentId;
+        }
+    }
+    ```
+
+### scanMissingMessages
+
+`scanMissingMessages`方法会从`missingReleaseMessages`中查找曾经缺失的ReleaseMessage，找到的ReleaseMessage会调用`fireMessageScanned`回调listener，并从`missingReleaseMessages`中移除掉
+
+```java
+rivate void scanMissingMessages() {
+    Set<Long> missingReleaseMessageIds = missingReleaseMessages.keySet();
+    Iterable<ReleaseMessage> releaseMessages = releaseMessageRepository
+        .findAllById(missingReleaseMessageIds);
+    fireMessageScanned(releaseMessages);
+    releaseMessages.forEach(releaseMessage -> {
+        missingReleaseMessageIds.remove(releaseMessage.getId());
+    });
+    growAndCleanMissingMessages();
+}
+```
+
+对于尚未commit的ReleaseMessage，commit后自然会被`scanMissingMessages`扫描到，但回滚的ReleaseMessage是扫描不到的，为了避免`missingReleaseMessages`不断增长，`growAndCleanMissingMessages`方法内部实现了自动清理的逻辑
+
+```java
+private void growAndCleanMissingMessages() {
+    Iterator<Entry<Long, Integer>> iterator = missingReleaseMessages.entrySet()
+        .iterator();
+    while (iterator.hasNext()) {
+        Entry<Long, Integer> entry = iterator.next();
+        if (entry.getValue() > missingReleaseMessageMaxAge) {
+            iterator.remove();
+        } else {
+            entry.setValue(entry.getValue() + 1);
+        }
+    }
+}
+```
+
+`missingReleaseMessages`是个Map结构，key是ReleaseMessage对应的ID，value则是生命周期，每次扫描`missingReleaseMessages`时候value会增加1，当大于`missingReleaseMessageMaxAge`时remove掉。`missingReleaseMessageMaxAge`值目前是硬编码为10，不可配置，后续可能会被优化为可配置参数
+
