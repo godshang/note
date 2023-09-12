@@ -369,40 +369,48 @@ module.exports = {
                             path: '/framework/apollo/01'
                         },
                         {
-                            title: 'Apollo Portal源码分析——创建App',
+                            title: 'Apollo Portal源码分析——Portal创建App',
                             path: '/framework/apollo/portal_create_app'
                         },
                         {
-                            title: 'Apollo Portal源码分析——创建Cluster',
+                            title: 'Apollo Portal源码分析——Portal创建Cluster',
                             path: '/framework/apollo/portal_create_cluster'
                         },
                         {
-                            title: 'Apollo Portal源码分析——创建Namespace',
+                            title: 'Apollo Portal源码分析——Portal创建Namespace',
                             path: '/framework/apollo/portal_create_appnamespace'
                         },
                         {
-                            title: 'Apollo Portal源码分析——关联Namespace',
+                            title: 'Apollo Portal源码分析——Portal关联Namespace',
                             path: '/framework/apollo/portal_create_namespace'
                         },
                         {
-                            title: 'Apollo Portal源码分析——创建Item',
+                            title: 'Apollo Portal源码分析——Portal创建Item',
                             path: '/framework/apollo/portal_create_item'
                         },
                         {
-                            title: 'Apollo Portal源码分析——文本变更Item',
+                            title: 'Apollo Portal源码分析——Portal文本变更Item',
                             path: '/framework/apollo/portal_create_item_by_text'
                         },
                         {
-                            title: 'Apollo Portal源码分析——发布配置',
+                            title: 'Apollo Portal源码分析——Portal发布配置',
                             path: '/framework/apollo/portal_publish'
                         },
                         {
-                            title: 'Apollo Portal源码分析——发布ReleaseMessage',
+                            title: 'Apollo Portal源码分析——AdminService发布ReleaseMessage',
                             path: '/framework/apollo/adminservice_send_release_message'
                         },
                         {
                             title: 'Apollo Portal源码分析——ConfigService通知配置变更',
-                            path: '/framework/apollo/configservice-notifications'
+                            path: '/framework/apollo/configservice_notifications'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——ConfigService配置查询',
+                            path: '/framework/apollo/configservice_query_api'
+                        },
+                        {
+                            title: 'Apollo Portal源码分析——Client拉取配置',
+                            path: '/framework/apollo/client_poll_config'
                         }
                     ]
                 }
