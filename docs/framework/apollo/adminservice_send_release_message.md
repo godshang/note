@@ -1,4 +1,4 @@
-# Apollo Portal源码分析——发送ReleaseMessage
+# Apollo源码分析——发送ReleaseMessage
 
 [[toc]]
 

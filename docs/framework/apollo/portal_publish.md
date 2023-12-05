@@ -1,4 +1,4 @@
-# Apollo Portal源码分析——发布配置
+# Apollo源码分析——发布配置
 
 ## Portal
 

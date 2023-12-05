@@ -1,4 +1,4 @@
-# Apollo Portal源码分析——创建Namespace
+# Apollo源码分析——创建Namespace
 
 ## AppNamespace vs Namespace
 

@@ -1,4 +1,4 @@
-# Apollo Portal源码分析——ConfigService通知配置变更
+# Apollo源码分析——ConfigService通知配置变更
 
 [[toc]]
 

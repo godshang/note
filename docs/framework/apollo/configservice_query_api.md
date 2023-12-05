@@ -1,4 +1,4 @@
-# Apollo Portal源码分析——ConfigService配置查询
+# Apollo源码分析——ConfigService配置查询
 
 上文分析了配置变更时通知的实现，但通知变化的接口，仅返回通知相关的信息，不包括配置相关的信息，ConfigService还提供了读取配置的接口。
 

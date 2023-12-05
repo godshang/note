@@ -1,4 +1,4 @@
-# Apollo Portal源码分析——关联Namespace
+# Apollo源码分析——关联Namespace
 
 ## Portal
 

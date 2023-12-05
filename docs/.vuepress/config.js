@@ -13,35 +13,56 @@ module.exports = {
     },
     themeConfig: {
         nav: [
-            { text: 'Home', link: '/' },
-            { text: 'Java', items: [
-                { text: 'Java基础', link: '/java/base/Basic' },
-                { text: 'Java集合框架', link: '/java/collection/ArrayList' },
-                { text: 'Java并发编程', link: '/java/concurrent/Theory' },
-                { text: 'JVM相关', link: '/java/jvm/Memory' },
-                { text: 'Java NIO相关', link: '/java/nio/IO' },
-            ] },
-            { text: '数据存储', items: [
-                { text: 'MySQL', link: '/storage/database/MySQL' },
-                { text: 'Redis', link: '/storage/redis/Redis_Question' },
-                { text: '消息队列', link: '/storage/mq/Kafka_Intro' },
-            ] },
-            { text: '框架', items: [
-                { text: 'Spring', link: '/framework/spring/Spring_Basic' },
-                { text: 'Netty', link: '/framework/netty/Netty_BusinessLogic' },
-                { text: 'Apollo', link: '/framework/apollo/01' },
-            ] },
-            { text: '架构', items: [
-                { text: '系统设计', link: '/arch/system_design/01_Scale_From_Zero' },
-                { text: '案例', link: '/arch/case_study/Rate_Limiter' },
-            ] },
-            { text: 'Web3', items: [
-                { text: '北大肖臻《区块链技术与应用》', link: '/web3/blockchain/01' },
-            ] },
+            {
+                text: 'Home', 
+                link: '/' 
+            },
+            {
+                text: 'Java', 
+                items: [
+                    { text: 'Java基础', link: '/java/base/Basic' },
+                    { text: 'Java集合框架', link: '/java/collection/ArrayList' },
+                    { text: 'Java并发编程', link: '/java/concurrent/Theory' },
+                    { text: 'JVM相关', link: '/java/jvm/Memory' },
+                    { text: 'Java NIO相关', link: '/java/nio/IO' },
+                ]
+            },
+            {
+                text: '数据存储', 
+                items: [
+                    { text: 'MySQL', link: '/storage/database/MySQL' },
+                    { text: 'Redis', link: '/storage/redis/Redis_Question' },
+                    { text: '消息队列', link: '/storage/mq/Kafka_Intro' },
+                ]
+            },
+            {
+                text: '框架',
+                items: [
+                    { text: 'Spring', link: '/framework/spring/Spring_Basic' },
+                    { text: 'Netty', link: '/framework/netty/Netty_BusinessLogic' },
+                    { text: 'Apollo源码分析', link: '/framework/apollo/setup_debug_enviroment' },
+                ]
+            },
+            {
+                text: '架构',
+                items: [
+                    { text: '系统设计', link: '/arch/system_design/01_Scale_From_Zero' },
+                    { text: '案例', link: '/arch/case_study/Rate_Limiter' },
+                ]
+            },
+            {
+                text: 'Web3',
+                items: [
+                    { text: '北大肖臻《区块链技术与应用》', link: '/web3/blockchain/01' },
+                ]
+            },
             // { text: 'Kubernetes', link: '/kubernetes/01_intro' },
-            { text: '其他', items: [
-                { text: '证券从业资格考试', link: '/other/sac/01' },
-            ] },
+            {
+                text: '其他',
+                items: [
+                    { text: '证券从业资格考试', link: '/other/sac/01' },
+                ]
+            },
         ],
         sidebar: {
             '/java/base/': [
@@ -360,57 +381,77 @@ module.exports = {
             ],
             '/framework/apollo/': [
                 {
-                    title: 'Apollo',
+                    title: 'Apollo源码分析',
                     collapsable: false,
                     sidebarDepth: 0,
                     children: [
                         {
                             title: 'Apollo调试环境搭建',
-                            path: '/framework/apollo/01'
+                            path: '/framework/apollo/setup_debug_enviroment'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal创建App',
+                            title: 'Apollo源码分析——Portal创建App',
                             path: '/framework/apollo/portal_create_app'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal创建Cluster',
+                            title: 'Apollo源码分析——Portal创建Cluster',
                             path: '/framework/apollo/portal_create_cluster'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal创建Namespace',
+                            title: 'Apollo源码分析——Portal创建Namespace',
                             path: '/framework/apollo/portal_create_appnamespace'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal关联Namespace',
+                            title: 'Apollo源码分析——Portal关联Namespace',
                             path: '/framework/apollo/portal_create_namespace'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal创建Item',
+                            title: 'Apollo源码分析——Portal创建Item',
                             path: '/framework/apollo/portal_create_item'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal文本变更Item',
+                            title: 'Apollo源码分析——Portal文本变更Item',
                             path: '/framework/apollo/portal_create_item_by_text'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Portal发布配置',
+                            title: 'Apollo源码分析——Portal发布配置',
                             path: '/framework/apollo/portal_publish'
                         },
                         {
-                            title: 'Apollo Portal源码分析——AdminService发布ReleaseMessage',
+                            title: 'Apollo源码分析——AdminService发布ReleaseMessage',
                             path: '/framework/apollo/adminservice_send_release_message'
                         },
                         {
-                            title: 'Apollo Portal源码分析——ConfigService通知配置变更',
+                            title: 'Apollo源码分析——ConfigService通知配置变更',
                             path: '/framework/apollo/configservice_notifications'
                         },
                         {
-                            title: 'Apollo Portal源码分析——ConfigService配置查询',
+                            title: 'Apollo源码分析——ConfigService配置查询',
                             path: '/framework/apollo/configservice_query_api'
                         },
                         {
-                            title: 'Apollo Portal源码分析——Client拉取配置',
+                            title: 'Apollo源码分析——Client拉取配置',
                             path: '/framework/apollo/client_poll_config'
+                        },
+                        {
+                            title: 'Apollo源码分析——Portal 创建灰度',
+                            path: '/framework/apollo/portal_create_namespace_branch'
+                        },
+                        {
+                            title: 'Apollo源码分析——Portal 配置灰度规则',
+                            path: '/framework/apollo/portal_create_namespace_branch_gray_rule'
+                        },
+                        {
+                            title: 'Apollo源码分析——Portal 灰度全量发布',
+                            path: '/framework/apollo/portal_publish_namespace_branch_to_master'
+                        },
+                        {
+                            title: 'Apollo 源码解析 —— Portal 灰度发布',
+                            path: '/framework/apollo/portal_publish_namespace_branch'
+                        },
+                        {
+                            title: 'Apollo 源码解析 —— 客户端 API 配置（一）之一览',
+                            path: '/framework/apollo/client_config_api_1'
                         }
                     ]
                 }
