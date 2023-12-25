@@ -452,6 +452,18 @@ module.exports = {
                         {
                             title: 'Apollo 源码解析 —— 客户端 API 配置（一）之一览',
                             path: '/framework/apollo/client_config_api_1'
+                        },
+                        {
+                            title: 'Apollo 源码解析 —— 客户端 API 配置（二）之 Config',
+                            path: '/framework/apollo/client_config_api_2'
+                        },
+                        {
+                            title: 'Apollo 源码解析 —— 客户端 API 配置（三）之 ConfigFile',
+                            path: '/framework/apollo/client_config_api_3'
+                        },
+                        {
+                            title: 'Apollo 源码解析 —— 客户端 API 配置（四）之 ConfigRepository                            ',
+                            path: '/framework/apollo/client_config_api_4'
                         }
                     ]
                 }
