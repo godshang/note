@@ -480,7 +480,7 @@ public static List<String> loadFactoryNames(Class<?> factoryClass, ClassLoader c
 
 ## SPI机制实现原理
 
-不妨看下JDK中ServiceLoader<S>方法的具体实现：
+不妨看下JDK中`ServiceLoader<S>`方法的具体实现：
 
 ```java
 //ServiceLoader实现了Iterable接口，可以遍历所有的服务实现者

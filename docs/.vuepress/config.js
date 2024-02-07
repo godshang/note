@@ -20,34 +20,35 @@ module.exports = {
             {
                 text: 'Java', 
                 items: [
-                    { text: 'Java基础', link: '/java/base/Basic' },
+                    { text: 'Java基础', link: '/java/base/basic' },
                     { text: 'Java集合框架', link: '/java/collection/ArrayList' },
                     { text: 'Java并发编程', link: '/java/concurrent/Theory' },
-                    { text: 'JVM相关', link: '/java/jvm/Memory' },
-                    { text: 'Java NIO相关', link: '/java/nio/IO' },
+                    { text: 'JVM相关', link: '/java/jvm/memory' },
+                    { text: 'Java NIO相关', link: '/java/nio/io' },
                 ]
             },
             {
                 text: '数据存储', 
                 items: [
-                    { text: 'MySQL', link: '/storage/database/MySQL' },
-                    { text: 'Redis', link: '/storage/redis/Redis_Question' },
-                    { text: '消息队列', link: '/storage/mq/Kafka_Intro' },
+                    { text: 'MySQL', link: '/storage/database/mysql' },
+                    { text: 'Redis', link: '/storage/redis/redis-question' },
+                    { text: '消息队列', link: '/storage/mq/kafka-intro' },
                 ]
             },
             {
                 text: '框架',
                 items: [
-                    { text: 'Spring', link: '/framework/spring/Spring_Basic' },
-                    { text: 'Netty', link: '/framework/netty/Netty_BusinessLogic' },
-                    { text: 'Apollo源码分析', link: '/framework/apollo/setup_debug_enviroment' },
+                    { text: 'Spring', link: '/framework/spring/Spring-Basic' },
+                    { text: 'Spring框架', link: '/framework/spring-framework/spring-framework-intro' },
+                    { text: 'Netty', link: '/framework/netty/netty-business-logic' },
+                    { text: 'Apollo源码分析', link: '/framework/apollo/setup-debug-enviroment' },
                 ]
             },
             {
                 text: '架构',
                 items: [
-                    { text: '系统设计', link: '/arch/system_design/01_Scale_From_Zero' },
-                    { text: '案例', link: '/arch/case_study/Rate_Limiter' },
+                    { text: '系统设计', link: '/arch/system-design/01-scale-from-zero' },
+                    { text: '案例', link: '/arch/case-study/rate-limiter' },
                 ]
             },
             {
@@ -56,7 +57,6 @@ module.exports = {
                     { text: '北大肖臻《区块链技术与应用》', link: '/web3/blockchain/01' },
                 ]
             },
-            // { text: 'Kubernetes', link: '/kubernetes/01_intro' },
             {
                 text: '其他',
                 items: [
@@ -73,15 +73,19 @@ module.exports = {
                     children: [
                         {
                             title: 'Java基础-知识点',
-                            path: '/java/base/Basic',
+                            path: '/java/base/basic',
                         },
                         {
                             title: 'Java基础-面向对象',
-                            path: '/java/base/Oop',
+                            path: '/java/base/oop',
                         },
                         {
                             title: 'Java基础-代理',
-                            path: '/java/base/Proxy'
+                            path: '/java/base/proxy'
+                        },
+                        {
+                            title: 'Java基础-SPI机制',
+                            path: '/java/base/spi'
                         }
                     ]
                 }
@@ -125,8 +129,8 @@ module.exports = {
                             path: '/java/collection/TreeMap',
                         },
                         {
-                            title: 'Red_Black_Tree',
-                            path: '/java/collection/Red_Black_Tree',
+                            title: 'Red-Black-Tree',
+                            path: '/java/collection/Red-Black-Tree',
                         },
                         {
                             title: 'HashSet',
@@ -163,7 +167,7 @@ module.exports = {
                         },
                         {
                             title: 'JUC锁',
-                            path: '/java/concurrent/JUC_Lock',
+                            path: '/java/concurrent/JUC-Lock',
                         },
                         {
                             title: 'CopyOnWriteArrayList',
@@ -196,19 +200,19 @@ module.exports = {
                     children: [
                         {
                             title: 'JVM内存模型',
-                            path: '/java/jvm/Memory',
+                            path: '/java/jvm/memory',
                         },
                         {
                             title: '垃圾回收',
-                            path: '/java/jvm/GC',
+                            path: '/java/jvm/gc',
                         },
                         {
                             title: 'HotSpot垃圾回收算法实现',
-                            path: '/java/jvm/HotSpot_Algo',
+                            path: '/java/jvm/hotspot-algo',
                         },
                         {
                             title: '类加载器',
-                            path: '/java/jvm/Class_Loader',
+                            path: '/java/jvm/class-loader',
                         }
                     ]
                 }
@@ -221,15 +225,15 @@ module.exports = {
                     children: [
                         {
                             title: 'I/O模型',
-                            path: '/java/nio/IO',
+                            path: '/java/nio/io',
                         },
                         {
                             title: 'I/O多路复用',
-                            path: '/java/nio/IO_Multiplex',
+                            path: '/java/nio/io-multiplex',
                         },
                         {
                             title: 'Reactor模式',
-                            path: '/java/nio/Reactor',
+                            path: '/java/nio/reactor',
                         }
                     ]
                 }
@@ -242,23 +246,23 @@ module.exports = {
                     children: [
                         {
                             title: 'MySQL常见问题',
-                            path: '/storage/database/MySQL'
+                            path: '/storage/database/mysql'
                         },
                         {
                             title: '分库分表',
-                            path: '/storage/database/Shard'
+                            path: '/storage/database/shard'
                         },
                         {
                             title: '索引',
-                            path: '/storage/database/DB_Index'
+                            path: '/storage/database/db-index'
                         },
                         {
                             title: '事务',
-                            path: '/storage/database/Transaction'
+                            path: '/storage/database/transaction'
                         },
                         {
                             title: '事务ACID的实现原理',
-                            path: '/storage/database/ACID'
+                            path: '/storage/database/acid'
                         }
                     ]
                 }
@@ -271,39 +275,35 @@ module.exports = {
                     children: [
                         {
                             title: 'Redis常见问题',
-                            path: '/storage/redis/Redis_Question'
+                            path: '/storage/redis/redis-question'
                         },
                         {
                             title: 'Redis数据结构',
-                            path: '/storage/redis/Redis_DataStructure'
+                            path: '/storage/redis/redis-data-structure'
                         },
                         {
                             title: 'Redis持久化',
-                            path: '/storage/redis/Redis_Persistence'
+                            path: '/storage/redis/redis-persistence'
                         },
                         {
                             title: 'Redis事务',
-                            path: '/storage/redis/Redis_Tx'
+                            path: '/storage/redis/redis-tx'
                         },
                         {
                             title: '分布式锁',
-                            path: '/storage/redis/Redis_Lock'
+                            path: '/storage/redis/redis-lock'
                         },
                         {
                             title: '消息队列',
-                            path: '/storage/redis/Redis_MQ'
-                        },
-                        {
-                            title: 'HyperLogLog',
-                            path: '/storage/redis/Redis_HyperLogLog'
+                            path: '/storage/redis/redis-mq'
                         },
                         {
                             title: '布隆过滤器',
-                            path: '/storage/redis/Redis_BloomFilter'
+                            path: '/storage/redis/redis-bloom-filter'
                         },
                         {
                             title: 'Scan',
-                            path: '/storage/redis/Redis_Scan'
+                            path: '/storage/redis/redis-scan'
                         }
                     ]
                 }
@@ -316,19 +316,56 @@ module.exports = {
                     children: [
                         {
                             title: 'Kafka详解',
-                            path: '/storage/mq/Kafka_Intro'
+                            path: '/storage/mq/kafka-intro'
                         },
                         {
                             title: 'Kafka常见问题',
-                            path: '/storage/mq/Kafka_Question'
+                            path: '/storage/mq/kafka-question'
                         },
                         {
                             title: 'RocketMQ详解',
-                            path: '/storage/mq/RocketMQ_Intro'
+                            path: '/storage/mq/rmq-intro'
                         },
                         {
                             title: 'MQ常见问题',
-                            path: '/storage/mq/MQ_Question'
+                            path: '/storage/mq/mq-question'
+                        }
+                    ]
+                }
+            ],
+            '/framework/spring-framework/': [
+                {
+                    title: 'Spring',
+                    collapsable: false,
+                    sidebarDepth: 0,
+                    children: [
+                        {
+                            title: 'Spring基础 - 简介',
+                            path: '/framework/spring-framework/spring-framework-intro'
+                        },
+                        {
+                            title: 'Spring基础 - Spring核心之控制反转(IOC)',
+                            path: '/framework/spring-framework/spring-framework-ioc'
+                        },
+                        {
+                            title: 'Spring基础 - Spring核心之面向切面编程(AOP)',
+                            path: '/framework/spring-framework/spring-framework-aop'
+                        },
+                        {
+                            title: 'Spring基础 - SpringMVC请求流程',
+                            path: '/framework/spring-framework/spring-framework-mvc'
+                        },
+                        {
+                            title: 'Spring进阶- Spring IOC实现原理详解之IOC体系结构设计',
+                            path: '/framework/spring-framework/spring-framework-ioc-source-1'
+                        },
+                        {
+                            title: 'Spring进阶- Spring IOC实现原理详解之IOC初始化流程',
+                            path: '/framework/spring-framework/spring-framework-ioc-source-2'
+                        },
+                        {
+                            title: 'Spring进阶- Spring IOC实现原理详解之Bean实例化',
+                            path: '/framework/spring-framework/spring-framework-ioc-source-3'
                         }
                     ]
                 }
@@ -339,29 +376,29 @@ module.exports = {
                     collapsable: false,
                     sidebarDepth: 0,
                     children: [
-                        {
+                        {   
                             title: 'Spring基础知识',
-                            path: '/framework/spring/Spring_Basic'
+                            path: '/framework/spring/spring-basic'
                         },
                         {
                             title: 'Spring IOC 容器源码分析',
-                            path: '/framework/spring/Spring_IoC'
+                            path: '/framework/spring/spring-ioc'
                         },
                         {
                             title: 'Spring AOP 使用介绍',
-                            path: '/framework/spring/Spring_AOP_Intro'
+                            path: '/framework/spring/pring-aop-intro'
                         },
                         {
                             title: 'Spring AOP 源码分析',
-                            path: '/framework/spring/Spring_AOP_Source'
+                            path: '/framework/spring/spring-aop-source'
                         },
                         {
                             title: 'Spring MVC',
-                            path: '/framework/spring/Spring_MVC'
+                            path: '/framework/spring/spring-mvc'
                         },
                         {
                             title: 'Spring Boot',
-                            path: '/framework/spring/Spring_Boot'
+                            path: '/framework/spring/spring-boot'
                         }
                     ]
                 }
@@ -374,7 +411,7 @@ module.exports = {
                     children: [
                         {
                             title: 'Netty耗时的业务逻辑应该写在哪儿，有什么注意事项',
-                            path: '/framework/netty/Netty_BusinessLogic'
+                            path: '/framework/netty/netty-business-logic'
                         }
                     ]
                 }
@@ -387,95 +424,95 @@ module.exports = {
                     children: [
                         {
                             title: 'Apollo调试环境搭建',
-                            path: '/framework/apollo/setup_debug_enviroment'
+                            path: '/framework/apollo/setup-debug-enviroment'
                         },
                         {
                             title: 'Apollo源码分析——Portal创建App',
-                            path: '/framework/apollo/portal_create_app'
+                            path: '/framework/apollo/portal-create-app'
                         },
                         {
                             title: 'Apollo源码分析——Portal创建Cluster',
-                            path: '/framework/apollo/portal_create_cluster'
+                            path: '/framework/apollo/portal-create-cluster'
                         },
                         {
                             title: 'Apollo源码分析——Portal创建Namespace',
-                            path: '/framework/apollo/portal_create_appnamespace'
+                            path: '/framework/apollo/portal-create-appnamespace'
                         },
                         {
                             title: 'Apollo源码分析——Portal关联Namespace',
-                            path: '/framework/apollo/portal_create_namespace'
+                            path: '/framework/apollo/portal-create-namespace'
                         },
                         {
                             title: 'Apollo源码分析——Portal创建Item',
-                            path: '/framework/apollo/portal_create_item'
+                            path: '/framework/apollo/portal-create-item'
                         },
                         {
                             title: 'Apollo源码分析——Portal文本变更Item',
-                            path: '/framework/apollo/portal_create_item_by_text'
+                            path: '/framework/apollo/portal-create-item-by-text'
                         },
                         {
                             title: 'Apollo源码分析——Portal发布配置',
-                            path: '/framework/apollo/portal_publish'
+                            path: '/framework/apollo/portal-publish'
                         },
                         {
                             title: 'Apollo源码分析——AdminService发布ReleaseMessage',
-                            path: '/framework/apollo/adminservice_send_release_message'
+                            path: '/framework/apollo/adminservice-send-release-message'
                         },
                         {
                             title: 'Apollo源码分析——ConfigService通知配置变更',
-                            path: '/framework/apollo/configservice_notifications'
+                            path: '/framework/apollo/configservice-notifications'
                         },
                         {
                             title: 'Apollo源码分析——ConfigService配置查询',
-                            path: '/framework/apollo/configservice_query_api'
+                            path: '/framework/apollo/configservice-query-api'
                         },
                         {
                             title: 'Apollo源码分析——Client拉取配置',
-                            path: '/framework/apollo/client_poll_config'
+                            path: '/framework/apollo/client-poll-config'
                         },
                         {
                             title: 'Apollo源码分析——Portal 创建灰度',
-                            path: '/framework/apollo/portal_create_namespace_branch'
+                            path: '/framework/apollo/portal-create-namespace-branch'
                         },
                         {
                             title: 'Apollo源码分析——Portal 配置灰度规则',
-                            path: '/framework/apollo/portal_create_namespace_branch_gray_rule'
+                            path: '/framework/apollo/portal-create-namespace-branch-gray-rule'
                         },
                         {
                             title: 'Apollo源码分析——Portal 灰度全量发布',
-                            path: '/framework/apollo/portal_publish_namespace_branch_to_master'
+                            path: '/framework/apollo/portal-publish-namespace-branch-to-master'
                         },
                         {
                             title: 'Apollo 源码解析 —— Portal 灰度发布',
-                            path: '/framework/apollo/portal_publish_namespace_branch'
+                            path: '/framework/apollo/portal-publish-namespace-branch'
                         },
                         {
                             title: 'Apollo 源码解析 —— 客户端 API 配置（一）之一览',
-                            path: '/framework/apollo/client_config_api_1'
+                            path: '/framework/apollo/client-config-api-1'
                         },
                         {
                             title: 'Apollo 源码解析 —— 客户端 API 配置（二）之 Config',
-                            path: '/framework/apollo/client_config_api_2'
+                            path: '/framework/apollo/client-config-api-2'
                         },
                         {
                             title: 'Apollo 源码解析 —— 客户端 API 配置（三）之 ConfigFile',
-                            path: '/framework/apollo/client_config_api_3'
+                            path: '/framework/apollo/client-config-api-3'
                         },
                         {
                             title: 'Apollo 源码解析 —— 客户端 API 配置（四）之 ConfigRepository                            ',
-                            path: '/framework/apollo/client_config_api_4'
+                            path: '/framework/apollo/client-config-api-4'
                         }
                     ]
                 }
             ],
-            '/arch/system_design/': [
+            '/arch/system-design/': [
                 {
                     title: '系统设计',
                     collapsable: false,
                     sidebarDepth: 0,
                 }
             ],
-            '/arch/case_study/': [
+            '/arch/case-study/': [
                 {
                     title: '架构案例',
                     collapsable: false,
@@ -483,27 +520,27 @@ module.exports = {
                     children: [
                         {
                             title: '限流',
-                            path: '/arch/case_study/Rate_Limiter'
+                            path: '/arch/case-study/rate-limiter'
                         },
                         {
                             title: '缓存一致性',
-                            path: '/arch/case_study/Cache_Consistency'
+                            path: '/arch/case-study/cache-consistency'
                         },
                         {
                             title: '缓存雪崩、缓存穿透、缓存击穿',
-                            path: '/arch/case_study/Cache_Avalanche_Cache_Penetration'
+                            path: '/arch/case-study/cache-avalanche-cache-penetration'
                         },
                         {
                             title: '如何设计一个亿级网关',
-                            path: '/arch/case_study/Gateway'
+                            path: '/arch/case-study/gateway'
                         },
                         {
                             title: '如何设计一个短网址服务',
-                            path: '/arch/case_study/Short_Url'
+                            path: '/arch/case-study/short-url'
                         },
                         {
                             title: '如何设计一个扣减类服务',
-                            path: '/arch/case_study/Deduction'
+                            path: '/arch/case-study/deduction'
                         },
                     ]
                 }   
@@ -525,7 +562,7 @@ module.exports = {
                 {
                     title: 'Kubernetes入门',
                     collapsable: false,
-                    path: '/kubernetes/01_intro'
+                    path: '/kubernetes/01-intro'
                 },
             ],
             '/other/sac/': [
