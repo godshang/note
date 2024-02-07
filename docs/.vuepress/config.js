@@ -386,7 +386,7 @@ module.exports = {
                         },
                         {
                             title: 'Spring AOP 使用介绍',
-                            path: '/framework/spring/pring-aop-intro'
+                            path: '/framework/spring/spring-aop-intro'
                         },
                         {
                             title: 'Spring AOP 源码分析',
