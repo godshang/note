@@ -38,7 +38,6 @@ module.exports = {
             {
                 text: '框架',
                 items: [
-                    { text: 'Spring', link: '/framework/spring/Spring-Basic' },
                     { text: 'Spring框架', link: '/framework/spring-framework/spring-framework-intro' },
                     { text: 'Netty', link: '/framework/netty/netty-business-logic' },
                     { text: 'Apollo源码分析', link: '/framework/apollo/setup-debug-enviroment' },
@@ -366,39 +365,6 @@ module.exports = {
                         {
                             title: 'Spring进阶- Spring IOC实现原理详解之Bean实例化',
                             path: '/framework/spring-framework/spring-framework-ioc-source-3'
-                        }
-                    ]
-                }
-            ],
-            '/framework/spring/': [
-                {
-                    title: 'Spring',
-                    collapsable: false,
-                    sidebarDepth: 0,
-                    children: [
-                        {   
-                            title: 'Spring基础知识',
-                            path: '/framework/spring/spring-basic'
-                        },
-                        {
-                            title: 'Spring IOC 容器源码分析',
-                            path: '/framework/spring/spring-ioc'
-                        },
-                        {
-                            title: 'Spring AOP 使用介绍',
-                            path: '/framework/spring/spring-aop-intro'
-                        },
-                        {
-                            title: 'Spring AOP 源码分析',
-                            path: '/framework/spring/spring-aop-source'
-                        },
-                        {
-                            title: 'Spring MVC',
-                            path: '/framework/spring/spring-mvc'
-                        },
-                        {
-                            title: 'Spring Boot',
-                            path: '/framework/spring/spring-boot'
                         }
                     ]
                 }
