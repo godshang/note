@@ -511,19 +511,6 @@ module.exports = {
                     ]
                 }   
             ],
-            '/web3/blockchain': [
-                {
-                    title: '北大肖臻《区块链技术与应用》',
-                    collapsable: false,
-                    sidebarDepth: 0,
-                    children: [
-                        {
-                            title: '比特币：密码学原理',
-                            path: '/web3/blockchain/01'
-                        },
-                    ]
-                }
-            ],
             '/kubernetes/': [
                 {
                     title: 'Kubernetes入门',
