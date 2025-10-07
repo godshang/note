@@ -50,18 +50,6 @@ module.exports = {
                     { text: '案例', link: '/arch/case-study/rate-limiter' },
                 ]
             },
-            {
-                text: 'Web3',
-                items: [
-                    { text: '北大肖臻《区块链技术与应用》', link: '/web3/blockchain/01' },
-                ]
-            },
-            {
-                text: '其他',
-                items: [
-                    { text: '证券从业资格考试', link: '/other/sac/01' },
-                ]
-            },
         ],
         sidebar: {
             '/java/base/': [
