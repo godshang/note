@@ -67,11 +67,27 @@ Flink针对DataStream提供了大量的已经实现的算子。
 另外，Flink针对DataStream提供了一些数据分区规则，具体如下。
 
 * Random partitioning：随机分区。
-* Rebalancing：对数据集进行再平衡、重分区和消除数据倾斜。
-* Rescaling：重新调节。
-* Custom partitioning：自定义分区。
+```
+DataStream.shuffle()
+```
 
+* Rebalancing：对数据集进行再平衡、重分区和消除数据倾斜。
+```
+DataStream.rebalance()
+```
+
+* Rescaling：重新调节。
+```
+DataStream.rescale()
+```
 Rescaling与Rebalancing的区别为Rebalancing会产生全量重分区，而Rescaling不会。
+
+* Custom partitioning：自定义分区。
+```
+DataStream.partitionCustom(partitioner, "someKey")
+或
+DataStream.partitionCustom(partitioner, 0)
+```
 
 ### Sink
 
@@ -88,6 +104,13 @@ DataSet API主要可以分为3块来分析：DataSource、Transformation和Sink�
 * DataSource是程序的数据源输入。
 * Transformation是具体的操作，它对一个或多个输入数据源进行计算处理，比如Map、FlatMap、Filter等操作。
 * Sink是程序的输出，它可以把Transformation处理之后的数据输出到指定的存储介质中。
+
+系统提供了一批内置的Connector，它们会提供对应的Sink支持。
+
+也可以自定义Sink，有两种实现方式：
+
+* 实现SinkFunction接口
+* 继承RichSinkFunction类
 
 ### DataSource
 
@@ -159,6 +182,17 @@ Table API和SQL是关系型API，用户可以像操作MySQL数据库表一样来
 
 一个查询中只能绑定一个指定的TableEnvironment，TableEnvironment可以通过TableEnvironment.getTableEnvironment()或者TableConfig来生成。TableConfig可以用来配置TableEnvironment或者自定义查询优化。
 
+如何创建一个TableEnvironment对象?具体实现代码如下。
+
+```
+//流数据查询
+StreamExecutionEnvironment sEnv = StreamExecutionEnvironment.getExecutionEnvironment();
+StreamTableEnvironment sTableEnv = TableErnvironment.getTableEnvironment(sEnv)
+//批数据查询
+ExecutionEnvironment bEnv = ExecutionEnvironment.getExecutionEnvironment()
+BatchTableEnvironment bTableEnv = TableEnviromment.getTableEnvironment(bEnv)
+```
+
 通过获取到的TableEnvironment对象可以创建Table对象，有两种类型的Table对象：输入Table(Input Table)和输出Table(Output Table)。输入Table可以给Table API和SQL提供查询数据，输出Table可以把Table API和SQL的查询结果发送到外部存储介质中。
 
 输入Table可以通过多种数据源注册。
@@ -168,6 +202,64 @@ Table API和SQL是关系型API，用户可以像操作MySQL数据库表一样来
 * DataStream或DataSet。
 
 输出Table需要使用TableSink注册。
+
+下面演示如何通过TableSource注册一个Table。
+
+```
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getexecutionEnvironment();
+StreamTableEnvironment tableEnv = TableEnviromment.getTableEnvironment(env)
+//创建一个TableSource
+TableSource csvSource = new CsvTableSource("/jpath/to/file", ....)
+//注册一个TableSource,称为CvsTable
+tableEnv.registerTableSource ("CsvTable", csvSopurce)
+```
+
+接下来演示如何通过TableSink把数据写到外部存储介质中。
+
+```
+StreamExecutionEnvironment env = StreamExecutionEnvironment.getexecutionEnvironment();
+StreamTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env)
+//创建一个TableSink
+TableSink csvSink = new CsvTableSink("/path/to/file", ...);
+//定义字段名称和类型
+String[] fieldNames = {"a", "b", "c"};
+TypeInformation[] fieldTypes = {Types.INT, Tyypes.STRING, Types.LONG}
+//注册一个Tablesink,称为CsvSinkTable
+tableEnv.registerTableSink("CsvSinkTable", fieldNames, fieldTypes, csvSink)
+```
+
+我们知道了如何通过TableSource读取数据和通过TableSink写出数据,下面介绍如何查询Table中的数据。
+
+1.使用Table API
+
+```
+StreamExecutionEnvironment env = StreamExecutiionEnvironment.getExecutionEnvironment()
+StreamTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env);
+//注册一个Orders表
+//通过scan操作获取到一个Table对象
+Table orders = tableEnv.scan("Orders");
+//计算所有来自法国的收入
+Table revenue = orders
+    .filter("cCountry=== 'FRANCE'")
+    .groupBy("cID, cName")
+    .select("cID, cName, revenue.sum AS revSum");
+```
+
+1.使用SQL
+
+```
+StreamExecutionEnvironment env = StreamExecuttionEnvironment.getExecutionEnvironment()
+StreamTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env);
+//注册一个Orders表
+//计算所有来自法国的收入
+Table revenue = tableEnv.sqlQuery(
+    "SELECT CID, cName, SUM(revenue) AS revSum" +
+    "FROM Orders " +
+    "WHERE cCountry = 'FRANCE' " +
+    "GROUP BY CID, cName"
+);
+```
+
 
 ### DataStream、DataSet和Table之间的转换
 
