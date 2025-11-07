@@ -499,29 +499,18 @@ module.exports = {
                     ]
                 }   
             ],
-            '/kubernetes/': [
+            '/bigdata/flink/': [
                 {
-                    title: 'Kubernetes入门',
-                    collapsable: false,
-                    path: '/kubernetes/01-intro'
-                },
-            ],
-            '/other/sac/': [
-                {
-                    title: '证券从业资格考试',
+                    title: 'Flink',
                     collapsable: false,
                     sidebarDepth: 0,
                     children: [
                         {
-                            title: '第一章 金融市场体系',
-                            path: '/other/sac/01'
-                        },
-                        {
-                            title: '第二章 中国的金融体系与多层次资本市场',
-                            path: '/other/sac/02'
-                        },
+                            title: '限流',
+                            path: '/arch/case-study/rate-limiter'
+                        }
                     ]
-                }
+                }   
             ]
         }
     }
