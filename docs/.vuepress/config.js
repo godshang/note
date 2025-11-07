@@ -187,11 +187,11 @@ module.exports = {
                     children: [
                         {
                             title: 'JVM内存模型',
-                            path: '/java/jvm/memory',
+                            path: '/java/jvm/Memory',
                         },
                         {
                             title: '垃圾回收',
-                            path: '/java/jvm/gc',
+                            path: '/java/jvm/GC',
                         },
                         {
                             title: 'HotSpot垃圾回收算法实现',
