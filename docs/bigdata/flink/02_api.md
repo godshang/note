@@ -253,10 +253,10 @@ StreamTableEnvironment tableEnv = TableEnvironment.getTableEnvironment(env);
 //注册一个Orders表
 //计算所有来自法国的收入
 Table revenue = tableEnv.sqlQuery(
-    "SELECT CID, cName, SUM(revenue) AS revSum" +
-    "FROM Orders " +
-    "WHERE cCountry = 'FRANCE' " +
-    "GROUP BY CID, cName"
+"SELECT CID, cName, SUM(revenue) AS revSum" +
+"FROM Orders " +
+"WHERE cCountry = 'FRANCE' " +
+"GROUP BY CID, cName"
 );
 ```
 

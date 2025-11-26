@@ -506,8 +506,28 @@ module.exports = {
                     sidebarDepth: 0,
                     children: [
                         {
-                            title: '限流',
-                            path: '/arch/case-study/rate-limiter'
+                            title: 'Flink概述',
+                            path: '/bigdata/flink/01_intro'
+                        },
+                        {
+                            title: 'Flink常用API',
+                            path: '/bigdata/flink/02_api'
+                        },
+                        {
+                            title: 'Flink高级功能的使用',
+                            path: '/bigdata/flink/03_advanced'
+                        },
+                        {
+                            title: 'Flink State管理与恢复',
+                            path: '/bigdata/flink/04_state'
+                        },
+                        {
+                            title: 'Flink窗口',
+                            path: '/bigdata/flink/05_window'
+                        },
+                        {
+                            title: 'Flink Time',
+                            path: '/bigdata/flink/06_time'
                         }
                     ]
                 }   
