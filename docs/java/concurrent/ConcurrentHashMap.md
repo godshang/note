@@ -1,5 +1,7 @@
 # ConcurrentHashMap 源码分析
 
+本文主要分析 JDK 7 及更早版本中基于 `Segment` 的 `ConcurrentHashMap` 实现。JDK 8 起，`ConcurrentHashMap` 取消了分段锁结构，改为以 `Node` 数组、CAS 和桶级别同步为核心的实现，因此阅读时需要注意版本差异。
+
 `ConcurrentHashMap`类中包含两个静态内部类`HashEntry`和`Segment`。`HashEntry`用来封装映射表的键值对；`Segment`用来充当锁的角色，每个`Segment`对象守护整个散列映射表的若干个桶。每个桶是由若干个`HashEntry`对象链接起来的链表。一个`ConcurrentHashMap`实例中包含由若干个`Segment`对象组成的数组。
 
 ## HashEntry 类
@@ -118,11 +120,11 @@ static final class Segment<K,V> extends ReentrantLock implements Serializable {
 
 相比较于`HashTable`和由同步包装器包装的`HashMap`每次只能有一个线程执行读或写操作，`ConcurrentHashMap`在并发访问性能上有了质的提高。在理想状态下，`ConcurrentHashMap`可以支持 16 个线程执行并发写操作（如果并发级别设置为 16），及任意数量线程的读操作。
 
-### 用 HashEntery 对象的不变性来降低读操作对加锁的需求
+### 用 HashEntry 对象的不变性来降低读操作对加锁的需求
 
 `HashEntry`中的`key`、`hash`、`next`都声明为`final`型。这意味着，不能把节点添加到链接的中间和尾部，也不能在链接的中间和尾部删除节点。这个特性可以保证：在访问某个节点时，这个节点之后的链接不会被改变。这个特性可以大大降低处理链表时的复杂性。
 
-同时，`HashEntry`类的`value`域被声明为`volatile`型，Java的内存模型可以保证：某个写线程对`value`域的写入马上可以被后续的某个读线程“看”到。在`ConcurrentHashMap`中，不允许用`null`作为键和值，当读线程读到某个`HashEntry`的`value`域的值为`null`时，便知道产生了冲突——发生了重排序现象，需要加锁后重新读入这个`value`值。这些特性互相配合，使得读线程即使在不加锁状态下，也能正确访问 `ConcurrentHashMap`。
+同时，`HashEntry` 类的 `value` 字段被声明为 `volatile`。Java 内存模型可以保证，对同一个 `volatile` 变量的写入对后续读取可见。在该实现中，`ConcurrentHashMap` 不允许 `key` 或 `value` 为 `null`；如果读线程在特定竞态下读取到 `null`，会通过加锁重新读取，以避免读取到未完全发布的中间状态。这些特性共同降低了读操作对加锁的依赖。
 
 下面我们分别来分析线程写入的两种情形：对散列表做非结构性修改的操作和对散列表做结构性修改的操作。
 
@@ -134,9 +136,9 @@ static final class Segment<K,V> extends ReentrantLock implements Serializable {
 
 `clear`操作只是把`ConcurrentHashMap`中所有的桶“置空”，每个桶之前引用的链表依然存在，只是桶不再引用到这些链表（所有链表的结构并没有被修改）。正在遍历某个链表的读线程依然可以正常执行对该链表的遍历。
 
-在`Segment`中执行具体的`put`操作”中，我们可以看出，`put`操作如果需要插入一个新节点到链表中时 , 会在链表头部插入这个新节点。此时，链表中的原有节点的链接并没有被修改。也就是说：插入新健 / 值对到链表中的操作不会影响读线程正常遍历这个链表。
+在 `Segment` 中执行具体的 `put` 操作时，如果需要向链表插入新节点，会在链表头部插入该节点。此时，链表中的原有节点链接并未被修改。因此，插入新键值对通常不会影响读线程继续遍历原有链表。
 
-`rermov`和`get`操作一样，首先根据散列码找到具体的链表；然后遍历这个链表找到要删除的节点；最后把待删除节点之后的所有节点原样保留在新链表中，把待删除节点之前的每个节点克隆到新链表中。下面通过图例来说明`remove`操作。假设写线程执行`remove`操作，要删除链表的`C`节点，另一个读线程同时正在遍历这个链表。
+`remove` 和 `get` 操作一样，首先根据散列码找到具体链表；然后遍历链表找到要删除的节点；最后将待删除节点之后的所有节点原样保留在新链表中，并将待删除节点之前的每个节点克隆到新链表中。下面通过图例说明 `remove` 操作。假设写线程执行 `remove` 操作，要删除链表中的 `C` 节点，另一个读线程同时正在遍历该链表。
 
 执行删除之前的原链表：
 
@@ -162,11 +164,11 @@ static final class Segment<K,V> extends ReentrantLock implements Serializable {
 
 假设线程`M`在写入了`volatile`型变量`count`后，线程`N`读取了这个`volatile`型变量`count`。
 
-根据`happens-before`关系法则中的程序次序法则，A appens-before 于 B，C happens-before D。
+根据 `happens-before` 关系中的程序次序规则，A happens-before B，C happens-before D。
 
 根据 `volatile` 变量法则，B happens-before C。
 
-根据传递性，连接上面三个 `happens-before` 关系得到：A appens-before 于 B； B appens-before C；C happens-before D。也就是说：写线程`M`对链表做的结构性修改，在读线程`N`读取了同一个 `volatile`变量后，对线程`N`也是可见的了。
+根据传递性，连接上面三个 `happens-before` 关系得到：A happens-before B，B happens-before C，C happens-before D。也就是说，写线程 `M` 对链表做的结构性修改，在读线程 `N` 读取同一个 `volatile` 变量后，对线程 `N` 可见。
 
 虽然线程`N`是在未加锁的情况下访问链表。Java 的内存模型可以保证：只要之前对链表做结构性修改操作的写线程`M`在退出写方法前写`volatile`型变量`count`，读线程`N`在读取这个`volatile`型变量 `count` 后，就一定能“看到”这些修改。
 
@@ -176,6 +178,6 @@ static final class Segment<K,V> extends ReentrantLock implements Serializable {
 
 在`ConcurrentHashMap`中，所有执行写操作的方法（`put`, `remove`, `clear`），在对链表做结构性修改之后，在退出写方法前都会去写这个`count`变量。所有未加锁的读操作（`get`, `contains`, `containsKey`）在读方法中，都会首先去读取这个`count`变量。
 
-根据 Java 内存模型，对 同一个`volatile`变量的写 / 读操作可以确保：写线程写入的值，能够被之后未加锁的读线程“看到”。
+根据 Java 内存模型，对同一个 `volatile` 变量的写和后续读之间存在 happens-before 关系，可以确保写线程在写 `volatile` 前的修改对后续读线程可见。
 
 这个特性和前面介绍的`HashEntry`对象的不变性相结合，使得在`ConcurrentHashMap`中，读线程在读取散列表时，基本不需要加锁就能成功获得需要的值。这两个特性相配合，不仅减少了请求同一个锁的频率（读操作一般不需要加锁就能够成功获得值），也减少了持有同一个锁的时间（只有读到`value`域的值为`null`时 , 读线程才需要加锁后重读）。

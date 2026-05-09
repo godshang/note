@@ -1,6 +1,6 @@
 # TreeMap 源码分析
 
-`TreeMap`是另一个经常会用到的`Map`类型数据结构。`HashMap`不保证数据有序，`LinkedHashMap`保证数据可以保持插入顺序（或访问顺序），而如果希望`Map`能够保持`key`的大小顺序的时候，就可以使用`TreeMap`了。
+`TreeMap` 是常用的有序 `Map` 实现。`HashMap` 不保证迭代顺序，`LinkedHashMap` 可以保持插入顺序或访问顺序；如果需要根据 `key` 的排序规则维护映射顺序，可以使用 `TreeMap`。
 
 ## 类继承结构
 
@@ -116,7 +116,7 @@ public TreeMap(SortedMap<K, ? extends V> m) {
 }
 ```
 
-其中比较重要的是`comparator`这个属性，实现了`Comparator`这个接口，它决定了`TreeMap`中元素的顺序。如果在构造函数中未指定`comparator`属性，那么将使用`key`来决定顺序，此时要求`key`必须是一个实现了`Comparable`接口的类型，否则的话会出问题。
+其中较重要的是 `comparator` 属性，它决定 `TreeMap` 中键的排序规则。如果构造函数中未指定 `comparator`，则使用键的自然顺序；此时键必须实现 `Comparable` 接口，并且插入的键之间应当可以相互比较，否则会抛出 `ClassCastException`。
 
 `buildFromSorted`这个方法是一个内部的私有方法，被多个方法调用，主要功能是从有序数据中构建树结构。
 
@@ -234,7 +234,7 @@ public V put(K key, V value) {
 
 1. 判断红黑树的根节点是否为空，如果为空的情况，那么直接把本次`put`操作的键值对作为根节点。
 2. 根据`comparator`属性是否为空，决定遍历红黑树时如何判断顺序。
-3. 如果`comparator`不为空，那么使用`comparator`比较红黑树中每个节点与`key`的大小；如果`comparator`，那么使用`key`的`compareTo`方法比较红黑树中节点与`key`的大小，此时会有一次强制类型转换。
+3. 如果 `comparator` 不为空，则使用 `comparator` 比较红黑树中节点键与待插入 `key` 的大小；如果 `comparator` 为空，则使用 `key` 的 `compareTo` 方法进行比较，此时会进行一次类型转换。
 4. 在比较完红黑树中节点与`key`的大小后，找到了插入节点的位置，创建`Entry`对象放入树中，并调用`fixAfterInsertion`维护红黑树的平衡。
 
 ## get 方法
@@ -295,4 +295,4 @@ final Entry<K,V> getEntryUsingComparator(Object key) {
 
 ## 小结
 
-* `TreeMap`中`key`不能为空，否则会抛出空指针。
+* 在使用自然顺序排序时，`TreeMap` 不允许 `key` 为 `null`，否则会抛出 `NullPointerException`。如果提供的自定义 `Comparator` 明确支持 `null`，则可以由比较器自行定义 `null` 的排序规则。

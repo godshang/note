@@ -1,8 +1,10 @@
 # Stack 源码分析
 
-`Stack`是Java中的栈实现，它继承自`Vector`，在`Vector`的基础上增加了栈的相关操作方法，即`push`、`pop`、`peek`、`empty`、`search`等方法。
+`Stack` 是 Java 早期提供的栈实现，继承自 `Vector`，并在其基础上增加了 `push`、`pop`、`peek`、`empty`、`search` 等栈操作方法。
 
-代码比较简单，直接贴出来。
+由于 `Stack` 继承自 `Vector`，其方法带有同步语义，但该类属于较早期的集合类型。在新的代码中，如果需要栈结构，通常优先考虑使用 `Deque` 接口的实现，例如 `ArrayDeque`。
+
+`Stack` 的核心源码如下：
 
 ```java
 public

@@ -1,12 +1,12 @@
 # Vector 源码分析
 
-`Vector`的功能类似于`ArrayList`，它更为古老，从JDK 1.0时代就有了。
+`Vector` 的功能类似于 `ArrayList`，是 JDK 1.0 起提供的早期列表实现。
 
 `Vector`同样继承于`AbstractList`，实现了`List`、`RandomAccess`、`Cloneable`、`Serializable`接口。
 
 <img src="./image/Vector.png" />
 
-`Vector`的底层同样基于数组实现，内部处理过程也类似，添加元素时实现了数组的动态扩容。不同的是，`Vector`是一个线程安全的数据结构，通过`synchronized`关键字保证了多线程环境下的安全。
+`Vector` 底层同样基于数组实现，添加元素时会进行动态扩容。不同的是，`Vector` 的主要方法使用 `synchronized` 修饰，单个方法调用具备同步保护。但由于同步粒度较粗，在现代代码中通常优先使用 `ArrayList`，并在确有并发需求时选择更合适的并发容器或外部同步策略。
 
 ## 内部属性
 
@@ -16,7 +16,7 @@ protected int elementCount;
 protected int capacityIncrement;
 ```
 
-与`ArrayList`类似，`Vector`内部同样使用一个`elementData`数组来存储，使用`elementCount`来记录`Vector`实际存储的元素数量；不同的是，多了一个`capacityIncrement`字段，用于数组动态扩容时参与计算的。
+与 `ArrayList` 类似，`Vector` 使用 `elementData` 数组存储元素，使用 `elementCount` 记录实际元素数量。`capacityIncrement` 用于参与扩容计算。
 
 ## 构造函数
 
@@ -49,11 +49,11 @@ public Vector(Collection<? extends E> c) {
 }
 ```
 
-`Vector`默认的初始容量`elementCount`是10，默认的`capacityIncrement`是0。
+`Vector` 默认构造方法会创建长度为 10 的底层数组，此时 `elementCount` 为 0，`capacityIncrement` 默认为 0。
 
 ## 扩容
 
-`Vector`的增删等操作与`ArrayList`差不多，唯一不太一样的是扩容的计算，这部分代码在`ensureCapacityHelper`方法中。
+`Vector` 的增删操作与 `ArrayList` 类似，主要差异之一在于扩容计算方式。相关逻辑位于 `ensureCapacityHelper` 方法中。
 
 ```java
 private void ensureCapacityHelper(int minCapacity) {

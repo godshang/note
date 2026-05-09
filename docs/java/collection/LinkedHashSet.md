@@ -1,8 +1,8 @@
 # LinkedHashSet
 
-`LinkedHashSet`是另一个`Set`接口的实现，与`HashSet`不同的是，它能保证集合中元素的顺序，底层使用了`LinkedHashMap`实现。
+`LinkedHashSet` 是 `Set` 接口的实现之一。与 `HashSet` 不同，`LinkedHashSet` 可以按照元素插入顺序进行迭代，底层通过 `LinkedHashMap` 实现。
 
-`LinkedHashSet`实现非常简单，通过继承`HashSet`实现，只不过调用了父类的构造函数时，使用了`HashSet`包访问级别的构造函数，这个细节在上文介绍`HashSet`时有提到过。
+`LinkedHashSet` 继承自 `HashSet`。其关键点在于构造时调用了 `HashSet` 中包访问级别的构造方法，使底层 `map` 实例化为 `LinkedHashMap`。
 
 ```java
 HashSet(int initialCapacity, float loadFactor, boolean dummy) {
@@ -10,9 +10,9 @@ HashSet(int initialCapacity, float loadFactor, boolean dummy) {
 }
 ```
 
-我们知道，`LinkedHashMap`的顺序有插入顺序和访问顺序的差别（见`LinkedHashMap`一节），默认维护的是插入顺序。因此`LinkedHashSet`所保持的顺序，也就是元素插入时的先后顺序。
+`LinkedHashMap` 可以维护插入顺序，也可以维护访问顺序；默认维护插入顺序。因此，`LinkedHashSet` 默认保持元素插入时的先后顺序。
 
-`LinkedHashSet`代码比较简单，我就直接贴出来了。
+`LinkedHashSet` 的核心实现如下：
 
 ```java
 public class LinkedHashSet<E>

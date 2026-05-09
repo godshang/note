@@ -1,73 +1,45 @@
-# 知识点
+# Java 基础知识点
 
 ## 数据类型
 
-### Java基本数据类型
+### 基本数据类型
 
+Java 语言定义了 8 种基本数据类型，分别是整数类型、浮点类型、字符类型和布尔类型。
 
-| **名称** | **字节** | **最小值**       | **最大值**              | **描述**                     |
-|----------|----------|------------------|-------------------------|------------------------------|
-| byte     | 1        | \-128(-2\^7)     | 127(2\^7-1)             | 8位有正负的二进制整数        |
-| short    | 2        | \-2\^15          | 2\^15-1                 | 16位有正负的二进制整数       |
-| int      | 4        | \-2\^31          | 2\^31 -1                | 32位有正负的二进制整数       |
-| long     | 8        | \-2\^63          | 2\^63 -1                | 64位有正负的二进制整数       |
-| float    | 4        |                  |                         | 32位IEEE 754标准下的浮点数据 |
-| double   | 8        |                  |                         | 64位IEEE 754标准下的浮点数据 |
-| boolean  | 1bit     |                  |                         |                              |
-| char     | 2        | '\\u0000' (或 0) | '\\uffff' (或 65，535 ) | 16 位 Unicode 标准下的字符   |
+| 类型 | 存储宽度 | 最小值 | 最大值 | 说明 |
+| --- | --- | --- | --- | --- |
+| `byte` | 8 bit | -128 (-2^7) | 127 (2^7 - 1) | 有符号整数 |
+| `short` | 16 bit | -2^15 | 2^15 - 1 | 有符号整数 |
+| `int` | 32 bit | -2^31 | 2^31 - 1 | 有符号整数 |
+| `long` | 64 bit | -2^63 | 2^63 - 1 | 有符号整数 |
+| `float` | 32 bit | 约 1.4E-45 | 约 3.4028235E38 | IEEE 754 单精度浮点数 |
+| `double` | 64 bit | 约 4.9E-324 | 约 1.7976931348623157E308 | IEEE 754 双精度浮点数 |
+| `char` | 16 bit | `'\u0000'` | `'\uffff'` | UTF-16 编码单元 |
+| `boolean` | 未由 Java 语言规范规定 | `false` | `true` | 布尔值，实际存储大小由虚拟机实现决定 |
 
-### 缓存池
+需要注意，`boolean` 的存储大小不能简单等同于 1 bit。Java 语言规范只规定其取值为 `true` 和 `false`，并未规定其在内存中的具体宽度。
 
-new Integer(123) 与 Integer.valueOf(123) 的区别在于：
+### 包装类型缓存
 
-* new Integer(123) 每次都会新建一个对象
-* Integer.valueOf(123) 会使用缓存池中的对象，多次调用会取得同一个对象的引用。
+`new Integer(123)` 与 `Integer.valueOf(123)` 的主要区别在于对象创建方式：
 
-valueOf() 方法的实现比较简单，就是先判断值是否在缓存池中，如果在的话就直接返回缓存池的内容。
+* `new Integer(123)` 每次都会创建新的 `Integer` 对象。该构造方法在较新的 JDK 中已经被标记为废弃，不建议继续使用。
+* `Integer.valueOf(123)` 会优先使用缓存对象。若参数值位于缓存范围内，多次调用会返回同一个对象引用。
+
+`Integer.valueOf()` 的典型实现如下：
 
 ```java
 public static Integer valueOf(int i) {
-    if (i >= IntegerCache.low && i <= IntegerCache.high)
+    if (i >= IntegerCache.low && i <= IntegerCache.high) {
         return IntegerCache.cache[i + (-IntegerCache.low)];
+    }
     return new Integer(i);
 }
 ```
 
-在 Java 8 中，Integer 缓存池的大小默认为 -128~127。
+在 Java 8 中，`Integer` 缓存范围默认是 `-128` 到 `127`。上界可以通过虚拟机参数 `-XX:AutoBoxCacheMax=<size>` 或系统属性 `java.lang.Integer.IntegerCache.high` 调整。
 
-```java
-static final int low = -128;
-static final int high;
-static final Integer cache[];
-
-static {
-    // high value may be configured by property
-    int h = 127;
-    String integerCacheHighPropValue =
-        sun.misc.VM.getSavedProperty("java.lang.Integer.IntegerCache.high");
-    if (integerCacheHighPropValue != null) {
-        try {
-            int i = parseInt(integerCacheHighPropValue);
-            i = Math.max(i, 127);
-            // Maximum array size is Integer.MAX_VALUE
-            h = Math.min(i, Integer.MAX_VALUE - (-low) -1);
-        } catch( NumberFormatException nfe) {
-            // If the property cannot be parsed into an int, ignore it.
-        }
-    }
-    high = h;
-
-    cache = new Integer[(high - low) + 1];
-    int j = low;
-    for(int k = 0; k < cache.length; k++)
-        cache[k] = new Integer(j++);
-
-    // range [-128, 127] must be interned (JLS7 5.1.7)
-    assert IntegerCache.high >= 127;
-}
-```
-
-编译器会在缓冲池范围内的基本类型自动装箱过程调用 valueOf() 方法，因此多个 Integer 实例使用自动装箱来创建并且值相同，那么就会引用相同的对象。
+自动装箱会调用对应包装类型的 `valueOf()` 方法。因此，当值位于缓存范围内时，多个自动装箱产生的包装对象可能引用同一个实例：
 
 ```java
 Integer m = 123;
@@ -75,294 +47,190 @@ Integer n = 123;
 System.out.println(m == n); // true
 ```
 
-基本类型对应的缓冲池如下：
+JDK 对部分包装类型提供了缓存机制：
 
-* boolean values true and false
-* all byte values
-* short values between -128 and 127
-* int values between -128 and 127
-* char in the range \u0000 to \u007F
+* `Boolean` 缓存 `true` 和 `false`。
+* `Byte` 缓存全部取值。
+* `Short` 和 `Integer` 默认缓存 `-128` 到 `127`。
+* `Character` 默认缓存 `'\u0000'` 到 `'\u007f'`。
+* `Long` 默认缓存 `-128` 到 `127`。
+* `Float` 和 `Double` 没有缓存机制。
 
 ## String
 
-String 被声明为 final，因此它不可被继承。
+`String` 类被声明为 `final`，因此不能被继承。`String` 对象不可变，即对象创建后其字符序列不能再发生改变。
 
-内部使用 char 数组存储数据，该数组被声明为 final，这意味着 value 数组初始化之后就不能再引用其它数组。并且 String 内部没有改变 value 数组的方法，因此可以保证 String 不可变。
+在 Java 8 及以前，`String` 内部主要使用 `char[]` 保存字符数据；从 Java 9 开始，`String` 内部改为使用 `byte[]` 与编码标记实现紧凑字符串。无论底层存储形式如何，`String` 都不向外暴露可修改内部数据的方法，因此能够维持不可变性。
 
-### 不可变的好处：
+`String` 不可变具有以下作用：
 
-1. 可以缓存 hash 值
+1. 支持哈希值缓存。`String` 常作为 `HashMap` 的键，不可变性保证了对象的哈希值在生命周期内保持稳定。
+2. 支持字符串常量池。只有字符串内容不可变，共享同一个字符串对象才不会引入数据篡改问题。
+3. 提高安全性。文件路径、网络地址、类名等常以字符串形式传递，不可变性可以避免参数在传递过程中被修改。
+4. 简化并发访问。不可变对象天然可以在多线程之间安全共享。
 
-因为 String 的 hash 值经常被使用，例如 String 用做 HashMap 的 key。不可变的特性可以使得 hash 值也不可变，因此只需要进行一次计算。
+### String、StringBuffer 与 StringBuilder
 
-2. String Pool 的需要
+三者的核心区别如下：
 
-如果一个 String 对象已经被创建过了，那么就会从 String Pool 中取得引用。只有 String 是不可变的，才可能使用 String Pool。
+| 类型 | 是否可变 | 线程安全性 | 典型使用场景 |
+| --- | --- | --- | --- |
+| `String` | 不可变 | 线程安全 | 少量字符串操作、字符串常量、键值对象 |
+| `StringBuilder` | 可变 | 非线程安全 | 单线程环境下的大量字符串拼接 |
+| `StringBuffer` | 可变 | 线程安全 | 多线程环境下共享同一字符串缓冲区 |
 
-3. 安全性
-
-String 经常作为参数，String 不可变性可以保证参数不可变。例如在作为网络连接参数的情况下如果 String 是可变的，那么在网络连接过程中，String 被改变，改变 String 对象的那一方以为现在连接的是其它主机，而实际情况却不一定是。
-
-4. 线程安全
-
-String 不可变性天生具备线程安全，可以在多个线程中安全地使用。
-
-### String, StringBuffer and StringBuilder
-
-1. 可变性
-
-* String 不可变
-* StringBuffer 和 StringBuilder 可变
-
-2. 线程安全
-
-* String 不可变，因此是线程安全的
-* StringBuilder 不是线程安全的
-* StringBuffer 是线程安全的，内部使用 synchronized 进行同步
+`StringBuilder` 与 `StringBuffer` 都继承自 `AbstractStringBuilder`，内部维护可扩容的字符或字节缓冲区。`StringBuffer` 的主要方法使用同步机制保证线程安全，因此在无共享并发访问的场景下，通常优先使用 `StringBuilder`。
 
 ### String.intern()
 
-使用 String.intern() 可以保证相同内容的字符串变量引用同一的内存对象。
-
-下面示例中，s1 和 s2 采用 new String() 的方式新建了两个不同对象，而 s3 是通过 s1.intern() 方法取得一个对象引用。intern() 首先把 s1 引用的对象放到 String Pool(字符串常量池)中，然后返回这个对象引用。因此 s3 和 s1 引用的是同一个字符串常量池的对象。
+`String.intern()` 会返回字符串常量池中与当前字符串内容相同的规范化引用。如果常量池中已经存在相同内容的字符串，则返回常量池中的引用；如果不存在，则将该字符串对应的内容加入常量池，并返回常量池中的引用。
 
 ```java
 String s1 = new String("aaa");
 String s2 = new String("aaa");
-System.out.println(s1 == s2);           // false
+System.out.println(s1 == s2);          // false
+
 String s3 = s1.intern();
-System.out.println(s1.intern() == s3);  // true
+System.out.println(s1.intern() == s3); // true
 ```
 
-如果是采用 "bbb" 这种使用双引号的形式创建字符串实例，会自动地将新建的对象放入 String Pool 中。
+使用字面量创建字符串时，字符串字面量会进入字符串常量池：
 
-```
+```java
 String s4 = "bbb";
 String s5 = "bbb";
-System.out.println(s4 == s5);  // true
+System.out.println(s4 == s5); // true
 ```
 
-HotSpot中字符串常量池保存哪里？永久代？方法区还是堆区？
+在 HotSpot 虚拟机中，字符串常量池的位置随 JDK 版本发生过变化：
 
-1. 运行时常量池（Runtime Constant Pool）是虚拟机规范中是方法区的一部分，在加载类和结构到虚拟机后，就会创建对应的运行时常量池；而字符串常量池是这个过程中常量字符串的存放位置。所以从这个角度，字符串常量池属于虚拟机规范中的方法区，它是一个逻辑上的概念；而堆区，永久代以及元空间是实际的存放位置。
-2. 不同的虚拟机对虚拟机的规范（比如方法区）是不一样的，只有 HotSpot 才有永久代的概念。
-3. HotSpot也是发展的，由于一些问题的存在，HotSpot考虑逐渐去永久代，对于不同版本的JDK，实际的存储位置是有差异的，具体看如下表格：
+| JDK 版本 | 字符串常量池位置 | 方法区的典型实现 |
+| --- | --- | --- |
+| JDK 6 及以前 | 永久代 | 永久代 |
+| JDK 7 | 堆 | 永久代与堆共同承载相关数据 |
+| JDK 8 及以后 | 堆 | 元空间保存类元数据，字符串常量池仍位于堆中 |
 
-|JDK版本    |是否有永久代，字符串常量池放在哪里？                             |方法区逻辑上规范，由哪些实际的部分实现的？                                      |
-|---------|-----------------------------------------------|-----------------------------------------------------------|
-|jdk1.6及之前|有永久代，运行时常量池（包括字符串常量池），静态变量存放在永久代上              |这个时期方法区在HotSpot中是由永久代来实现的，以至于这个时期说方法区就是指永久代                |
-|jdk1.7   |有永久代，但已经逐步“去永久代”，字符串常量池、静态变量移除，保存在堆中；          |这个时期方法区在HotSpot中由永久代（类型信息、字段、方法、常量）和堆（字符串常量池、静态变量）共同实现     |
-|jdk1.8及之后|取消永久代，类型信息、字段、方法、常量保存在本地内存的元空间，但字符串常量池、静态变量仍在堆中|这个时期方法区在HotSpot中由本地内存的元空间（类型信息、字段、方法、常量）和堆（字符串常量池、静态变量）共同实现|
+方法区是 Java 虚拟机规范定义的逻辑区域；永久代和元空间是 HotSpot 对方法区的具体实现方式，不能将二者简单等同。
 
 ## 访问权限
 
-Java 中有三个访问权限修饰符: private、protected 以及 public，如果不加访问修饰符，表示包级可见。
+Java 提供 `private`、`protected`、`public` 三个显式访问修饰符；未显式声明访问修饰符时，表示包级可见。
 
-可以对类或类中的成员(字段以及方法)加上访问修饰符。
+访问控制可以作用于类、字段、方法和构造方法。类可见表示其他代码可以引用该类型；成员可见表示其他代码可以通过对象或类型访问该成员。
 
-* 类可见表示其它类可以用这个类创建实例对象。
-* 成员可见表示其它类可以用这个类的实例对象访问到该成员。
+`protected` 主要用于修饰成员，表示同包内可见，并且对子类可见。顶层类不能使用 `protected` 修饰。
 
-protected 用于修饰成员，表示在继承体系中成员对于子类可见，但是这个访问修饰符对于类没有意义。
+良好的模块设计应隐藏实现细节，只暴露必要的 API。访问权限应遵循最小可见性原则，即在满足功能需求的前提下尽可能限制类和成员的可见范围。
 
-设计良好的模块会隐藏所有的实现细节，把它的 API 与它的实现清晰地隔离开来。模块之间只通过它们的 API 进行通信，一个模块不需要知道其他模块的内部工作情况，这个概念被称为信息隐藏或封装。因此访问权限应当尽可能地使每个类或者成员不被外界访问。
-
-如果子类的方法重写了父类的方法，那么子类中该方法的访问级别不允许低于父类的访问级别。这是为了确保可以使用父类实例的地方都可以使用子类实例，也就是确保满足里氏替换原则。
+如果子类重写父类方法，子类方法的访问级别不能低于父类方法。这是为了保证使用父类类型的代码能够安全地替换为子类对象，符合里氏替换原则。
 
 ## 抽象类和接口
 
-1. 抽象类
+### 抽象类
 
-抽象类和抽象方法都使用 abstract 关键字进行声明。抽象类一般会包含抽象方法，抽象方法一定位于抽象类中。
+抽象类和抽象方法使用 `abstract` 关键字声明。包含抽象方法的类必须声明为抽象类，但抽象类不一定包含抽象方法。
 
-抽象类和普通类最大的区别是，抽象类不能被实例化，需要继承抽象类才能实例化其子类。
+抽象类不能直接实例化，通常用于抽取多个相关类的共同状态和行为。子类继承抽象类后，需要实现其抽象方法，除非子类本身仍然是抽象类。
 
-2. 接口
+### 接口
 
-接口是抽象类的延伸，在 Java 8 之前，它可以看成是一个完全抽象的类，也就是说它不能有任何的方法实现。
+接口用于定义行为契约。Java 8 以前，接口主要包含抽象方法和常量；从 Java 8 开始，接口可以定义默认方法和静态方法；从 Java 9 开始，接口还可以定义私有方法，用于复用默认方法中的内部逻辑。
 
-从 Java 8 开始，接口也可以拥有默认的方法实现，这是因为不支持默认方法的接口的维护成本太高了。在 Java 8 之前，如果一个接口想要添加新的方法，那么要修改所有实现了该接口的类。
+接口字段默认是 `public static final`，接口方法默认是 `public abstract`。默认方法和静态方法需要显式提供方法体。
 
-接口的成员(字段 + 方法)默认都是 public 的，并且不允许定义为 private 或者 protected。
+### 抽象类与接口的选择
 
-接口的字段默认都是 static 和 final 的。
+抽象类强调类型层次中的 `is-a` 关系，适合在相关类之间复用状态和代码。接口强调能力或契约，适合为不同类型提供统一行为。
 
-3. 比较
+一般而言：
 
-* 从设计层面上看，抽象类提供了一种 IS-A 关系，那么就必须满足里式替换原则，即子类对象必须能够替换掉所有父类对象。而接口更像是一种 LIKE-A 关系，它只是提供一种方法实现契约，并不要求接口和实现接口的类具有 IS-A 关系。
-* 从使用上来看，一个类可以实现多个接口，但是不能继承多个抽象类。
-* 接口的字段只能是 static 和 final 类型的，而抽象类的字段没有这种限制。
-* 接口的成员只能是 public 的，而抽象类的成员可以有多种访问权限。
+* 需要定义跨类型的行为契约，优先使用接口。
+* 需要在相关类之间共享代码、状态或受保护成员，适合使用抽象类。
+* 一个类只能继承一个父类，但可以实现多个接口，因此接口在组合能力方面更灵活。
 
-4. 使用选择
+## static 初始化顺序
 
-使用接口:
+静态变量和静态代码块先于实例变量、实例代码块和构造方法执行。同一类内部，静态变量和静态代码块按照源码中出现的顺序初始化。
 
-* 需要让不相关的类都实现一个方法，例如不相关的类都可以实现 Compareable 接口中的 compareTo() 方法；
-* 需要使用多重继承。
+存在继承关系时，典型初始化顺序如下：
 
-使用抽象类:
+1. 父类静态变量和静态代码块。
+2. 子类静态变量和静态代码块。
+3. 父类实例变量和实例代码块。
+4. 父类构造方法。
+5. 子类实例变量和实例代码块。
+6. 子类构造方法。
 
-* 需要在几个相关的类中共享代码。
-* 需要能控制继承来的成员的访问权限，而不是都为 public。
-* 需要继承非静态和非常量字段。
+## equals 与 hashCode
 
-在很多情况下，接口优先于抽象类，因为接口没有抽象类严格的类层次结构要求，可以灵活地为一个类添加行为。并且从 Java 8 开始，接口也可以有默认的方法实现，使得修改接口的成本也变的很低。
+`equals()` 用于判断两个对象在逻辑意义上是否相等。`Object` 的默认实现等同于引用比较，即只有两个引用指向同一个对象时才返回 `true`。
 
-## static初始化顺序
+`hashCode()` 返回对象的哈希码。哈希码不是 MD5，也不必具有全局唯一性；它只是用于哈希表等数据结构中辅助定位桶位置的整数。`Object` 的默认 `hashCode()` 通常与对象身份相关，但 Java 规范并不要求它必须等于对象内存地址。
 
-静态变量和静态语句块优先于实例变量和普通语句块，静态变量和静态语句块的初始化顺序取决于它们在代码中的顺序。
+`equals()` 与 `hashCode()` 需要满足以下约定：
 
-存在继承的情况下，初始化顺序为：
+1. 如果两个对象通过 `equals()` 判断相等，则二者的 `hashCode()` 必须相等。
+2. 如果两个对象的 `hashCode()` 相等，二者不一定通过 `equals()` 判断相等。
+3. 在对象参与相等性判断的字段未变化时，多次调用 `hashCode()` 应返回一致结果。
 
-* 父类(静态变量、静态语句块)
-* 子类(静态变量、静态语句块)
-* 父类(实例变量、普通语句块)
-* 父类(构造函数)
-* 子类(实例变量、普通语句块)
-* 子类(构造函数)
+因此，重写 `equals()` 时通常也必须重写 `hashCode()`。否则在 `HashMap`、`HashSet` 等基于哈希的数据结构中可能出现查找失败、重复元素判断错误等问题。
 
-## equals方法和hashCode方法
+## Object 类的常用方法
 
-equals是比较值是否相等。一般比较对象是否相等都用equals，equals方法主要是用来判断从表面上看或者从内容上看，2个对象是不是相等。比较两个枚举类型的值的时候不要调用equals，直接使用“==”就可以。
+| 方法 | 说明 |
+| --- | --- |
+| `Object()` | 默认构造方法 |
+| `clone()` | 创建并返回当前对象的副本 |
+| `equals(Object obj)` | 判断其他对象是否与当前对象相等 |
+| `finalize()` | 对象被回收前可能被垃圾回收器调用；该方法已经不推荐使用 |
+| `getClass()` | 返回对象的运行时类型 |
+| `hashCode()` | 返回对象的哈希码 |
+| `notify()` | 唤醒在该对象监视器上等待的单个线程 |
+| `notifyAll()` | 唤醒在该对象监视器上等待的所有线程 |
+| `toString()` | 返回对象的字符串表示 |
+| `wait()` | 使当前线程等待，直到被通知或被中断 |
+| `wait(long timeout)` | 使当前线程等待，直到被通知、被中断或等待时间到达 |
+| `wait(long timeout, int nanos)` | 在毫秒和纳秒粒度上指定等待时间 |
 
-hashCode实际上就是一个对象的MD5。对比起来比equals快得多。他是一个整数值，但是没有规律的。java中默认的散列码就是对象的存储地址。
+## Java 的四种引用
 
-对象相等则hashCode一定相等；hashCode相等对象未必相等。
+### 强引用
 
-注意：重载equals的时候，一定要(must)（正确）重载hashCode 。使得equals成立的时候，hashCode相等。使两个逻辑相等。我们在定义hashCode方法时，要乘以一些奇数（最好是素数），这是是为了在理论上增大哈希值得离散程度。这是数学上证明的问题。你需要知道的是，hashcode就是为了哈希索引用的，哈希值分布的越均匀，map数据结构的查询效率越高。
+强引用是最常见的引用形式，例如普通变量赋值产生的引用。只要对象仍然被强引用关联，垃圾回收器就不会回收该对象。若内存不足，虚拟机宁可抛出 `OutOfMemoryError`，也不会通过回收仍被强引用关联的对象来释放内存。
 
-## Object类有哪些方法？
+### 软引用
 
-| Object()                       | 默认构造方法                                                                                                                            |
-|--------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------|
-| clone()                        | 创建并返回此对象的一个副本。                                                                                                            |
-| equals(Object obj)             | 指示某个其他对象是否与此对象“相等”。                                                                                                    |
-| finalize()                     | 当垃圾回收器确定不存在对该对象的更多引用时，由对象的垃圾回收器调用此方法。                                                              |
-| getClass()                     | 返回一个对象的运行时类。                                                                                                                |
-| hashCode()                     | 返回该对象的哈希码值。                                                                                                                  |
-| notify()                       | 唤醒在此对象监视器上等待的单个线程。                                                                                                    |
-| notifyAll()                    | 唤醒在此对象监视器上等待的所有线程。                                                                                                    |
-| toString()                     | 返回该对象的字符串表示。                                                                                                                |
-| wait()                         | 导致当前的线程等待，直到其他线程调用此对象的 notify() 方法或 notifyAll() 方法。                                                         |
-| wait(long timeout)             | 导致当前的线程等待，直到其他线程调用此对象的 notify() 方法或 notifyAll() 方法，或者超过指定的时间量。                                   |
-| wait(long timeout， int nanos) | 导致当前的线程等待，直到其他线程调用此对象的 notify() 方法或 notifyAll() 方法，或者其他某个线程中断当前线程，或者已超过某个实际时间量。 |
+软引用由 `SoftReference` 表示。仅被软引用关联的对象通常会在内存不足时被回收，适合实现内存敏感型缓存。软引用可以与 `ReferenceQueue` 配合使用，以便在对象被回收后接收通知。
 
-## Java的四种引用
+### 弱引用
 
-**强引用(StrongReference)**
+弱引用由 `WeakReference` 表示。仅被弱引用关联的对象在下一次垃圾回收发生时通常会被回收，无论当前内存是否充足。弱引用常用于不希望影响对象生命周期的缓存、映射或监控场景，例如 `WeakHashMap`。
 
-强引用是使用最普遍的引用。如果一个对象具有强引用，那垃圾回收器绝不会回收它。当内存空间不足，Java虚拟机宁愿抛出OutOfMemoryError错误，使程序异常终止，也不会靠随意回收具有强引用的对象来解决内存不足的问题。
+### 虚引用
 
-**软引用(SoftReference)**
+虚引用由 `PhantomReference` 表示。虚引用不会影响对象生命周期，也不能通过 `get()` 取得对象实例。它必须与 `ReferenceQueue` 配合使用，主要用于在对象即将被回收时接收通知，从而执行资源清理或跟踪操作。
 
-如果一个对象只具有软引用，则内存空间足够，垃圾回收器就不会回收它；如果内存空间不足了，就会回收这些对象的内存。只要垃圾回收器没有回收它，该对象就可以被程序使用。软引用可用来实现内存敏感的高速缓存。
-软引用可以和一个引用队列（ReferenceQueue）联合使用，如果软引用所引用的对象被垃圾回收器回收，Java虚拟机就会把这个软引用加入到与之关联的引用队列中。
+## 无参构造方法的作用
 
-**弱引用(WeakReference)**
+如果子类构造方法没有显式调用父类构造方法，编译器会默认插入 `super()`，即调用父类的无参构造方法。
 
-弱引用与软引用的区别在于：只具有弱引用的对象拥有更短暂的生命周期。在垃圾回收器线程扫描它所管辖的内存区域的过程中，一旦发现了只具有弱引用的对象，不管当前内存空间足够与否，都会回收它的内存。不过，由于垃圾回收器是一个优先级很低的线程，因此不一定会很快发现那些只具有弱引用的对象。
+因此，如果父类只定义了有参构造方法，而没有定义无参构造方法，且子类构造方法没有显式调用父类已有的有参构造方法，则代码无法通过编译。此时可以在父类中补充无参构造方法，或者在子类构造方法中显式调用父类的有参构造方法。
 
-弱引用可以和一个引用队列（ReferenceQueue）联合使用，如果弱引用所引用的对象被垃圾回收，Java虚拟机就会把这个弱引用加入到与之关联的引用队列中。  
+## `new Object()` 的内存占用
 
-**虚引用(PhantomReference)**
+普通对象在 HotSpot 虚拟机中的典型内存布局包括：
 
-"虚引用"顾名思义，就是形同虚设，与其他几种引用都不同，虚引用并不会决定对象的生命周期。如果一个对象仅持有虚引用，那么它就和没有任何引用一样，在任何时候都可能被垃圾回收器回收。虚引用主要用来跟踪对象被垃圾回收器回收的活动。虚引用与软引用和弱引用的一个区别在于：虚引用必须和引用队列 （ReferenceQueue）联合使用。当垃圾回收器准备回收一个对象时，如果发现它还有虚引用，就会在回收对象的内存之前，把这个虚引用加入到与之 关联的引用队列中。
+* 对象头中的 Mark Word。
+* 类型指针，即 Klass Pointer。
+* 实例数据。
+* 对齐填充。
 
-**总结**
+数组对象还会额外保存数组长度。
 
-WeakReference与SoftReference都可以用来保存对象的实例引用，这两个类与垃圾回收有关。
+以 64 位 HotSpot 虚拟机为例，在开启压缩类指针的默认情况下，一个没有实例字段的普通 `Object` 对象通常占用 16 字节：
 
-WeakReference是弱引用，其中保存的对象实例可以被GC回收掉。这个类通常用于在某处保存对象引用，而又不干扰该对象被GC回收，通常用于Debug、内存监视工具等程序中。因为这类程序一般要求即要观察到对象，又不能影响该对象正常的GC过程。
+* Mark Word：8 字节。
+* 压缩后的类型指针：4 字节。
+* 对齐填充：4 字节。
 
-最近在JDK的Proxy类的实现代码中也发现了Weakrefrence的应用，Proxy会把动态生成的Class实例暂存于一个由Weakrefrence构成的Map中作为Cache。SoftReference是强引用，它保存的对象实例，除非JVM即将OutOfMemory，否则不会被GC回收。
-
-这个特性使得它特别适合设计对象Cache。对于Cache，我们希望被缓存的对象最好始终常驻内存，但是如果JVM内存吃紧，为了不发生OutOfMemoryError导致系统崩溃，必要的时候也允许JVM回收Cache的内存，待后续合适的时机再把数据重新Load到Cache中。这样可以系统设计得更具弹性。
-
-## String
-
-String 被声明为final，因此它不可继承。
-
-内部使用 char 数组存储数据，该数组被声明为 final，这意味着 value 数组初始化之后就不能再引用其它数组。并且 String 内部没有改变 value 数组的方法，因此可以保证 String 不可变。
-
-```java
-public final class String
-    implements java.io.Serializable, Comparable<String>, CharSequence {
-    /** The value is used for character storage. */
-    private final char value[];
-```
-
-不可变的好处：
-
-* 可以缓存 hash 值：因为 String 的 hash 值经常被使用，例如 String 用做 HashMap 的 key。不可变的特性可以使得 hash 值也不可变，因此只需要进行一次计算。
-* String Pool 的需要：如果一个 String 对象已经被创建过了，那么就会从 String Pool 中取得引用。只有 String 是不可变的，才可能使用 String Pool。
-* 安全性：String 经常作为参数，String 不可变性可以保证参数不可变。例如在作为网络连接参数的情况下如果 String 是可变的，那么在网络连接过程中，String 被改变，改变 String 对象的那一方以为现在连接的是其它主机，而实际情况却不一定是。
-* 线程安全：String 不可变性天生具备线程安全，可以在多个线程中安全地使用。
-
-## String StringBuffer 和 StringBuilder 的区别是什么? String 为什么是不可变的?
-
-**可变性**
-
-String 类中使用 final 关键字修饰字符数组来保存字符串，private final char value[]，所以 String 对象是不可变的。
-
-在 Java 9 之后，String 类的实现改用 byte 数组存储字符串 private final byte[] value;
-
-而 StringBuilder 与 StringBuffer 都继承自 AbstractStringBuilder 类，在 AbstractStringBuilder 中也是使用字符数组保存字符串char[]value 但是没有用 final 关键字修饰，所以这两种对象都是可变的。
-
-StringBuilder 与 StringBuffer 的构造方法都是调用父类构造方法也就是 AbstractStringBuilder 实现的。 AbstractStringBuilder 实现上类似 ArrayList 。
-
-```java
-abstract class AbstractStringBuilder implements Appendable, CharSequence {
-    /**
-     * The value is used for character storage.
-     */
-    char[] value;
-
-    /**
-     * The count is the number of characters used.
-     */
-    int count;
-
-    AbstractStringBuilder(int capacity) {
-        value = new char[capacity];
-    }
-```
-
-**线程安全性**
-
-String 中的对象是不可变的，也就可以理解为常量，线程安全。AbstractStringBuilder 是 StringBuilder 与 StringBuffer 的公共父类，定义了一些字符串的基本操作，如 expandCapacity、append、insert、indexOf 等公共方法。StringBuffer 对方法加了同步锁或者对调用的方法加了同步锁，所以是线程安全的。StringBuilder 并没有对方法进行加同步锁，所以是非线程安全的。
-
-**性能**
-
-每次对 String 类型进行改变的时候，都会生成一个新的 String 对象，然后将指针指向新的 String 对象。StringBuffer 每次都会对 StringBuffer 对象本身进行操作，而不是生成新的对象并改变对象引用。相同情况下使用 StringBuilder 相比使用 StringBuffer 仅能获得 10%~15% 左右的性能提升，但却要冒多线程不安全的风险。
-
-**对于三者使用的总结**
-
-1. 操作少量的数据: 适用 String
-2. 单线程操作字符串缓冲区下操作大量数据: 适用 StringBuilder
-3. 多线程操作字符串缓冲区下操作大量数据: 适用 StringBuffer
-
-## 在 Java 中定义一个不做事且没有参数的构造方法的作用
-
-Java 程序在执行子类的构造方法之前，如果没有用 super()来调用父类特定的构造方法，则会调用父类中“没有参数的构造方法”。因此，如果父类中只定义了有参数的构造方法，而在子类的构造方法中又没有用 super()来调用父类中特定的构造方法，则编译时将发生错误，因为 Java 程序在父类中找不到没有参数的构造方法可供执行。解决办法是在父类里加上一个不做事且没有参数的构造方法。
-
-## Object object = new Object() 在内存中占了多少字节？
-
-普通对象在内存中的存储布局：
-
-* 对象头 markword
-* 类型指针 class pointer
-* 实例数据 instance data
-* 对齐 padding
-
-数组对象在内存中的存储布局：
-
-* 对象头 markword
-* 类型指针 class pointer
-* 数组长度 length 4字节
-* 实例数据 instance data
-* 对齐 padding
-
-markword长8个字节；对于64位虚拟机，指针长度为64位8个字节，如果开启了压缩指针（-XX:UseCompressedClassPointers，默认开启），那么就是4个字节；再加上对齐4字节，共16字节。
-
-如果算上对象应用的指针的话，就是20字节。
+如果计算某个引用变量本身的大小，还需要额外考虑引用在栈帧或对象字段中的存储空间。开启普通对象指针压缩时，引用通常为 4 字节；未开启压缩时，引用通常为 8 字节。

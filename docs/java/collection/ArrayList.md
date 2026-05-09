@@ -1,6 +1,6 @@
 # ArrayList 源码分析
 
-`ArrayList`是一个最常用的列表数据结构，底层基于数组实现。功能上与Java中的数组类似，但是一个动态的数据，它的容量可以随着元素的加入动态增长，而不需要使用者关心。`ArrayList`继承于`AbstractList`，实现了`List`、`RandomAccess`、`Cloneable`、`Serializable`接口。
+`ArrayList` 是常用的列表结构，底层基于数组实现。它与普通数组相似，但容量可以随元素增加而动态扩展。`ArrayList` 继承自 `AbstractList`，并实现了 `List`、`RandomAccess`、`Cloneable`、`Serializable` 接口。
 
 <img src="./image/ArrayList.png" />
 
@@ -30,11 +30,11 @@ public ArrayList(Collection<? extends E> c) {
 }
 ```
 
-`ArrayList`在创建对象时可以指定初始的容量大小，不指定时这个值默认时10；也可以基于一个已有的`Collection`对象来创建新的`ArrayList`。
+在所示 JDK 6 实现中，`ArrayList` 创建对象时可以显式指定初始容量；未指定时，默认初始容量为 10。也可以基于已有的 `Collection` 创建新的 `ArrayList`。
 
 ## 内部属性
 
-`ArrayList`中有两个非常重要的内部属性，一个是`elementData`这个`Object`类型的数组，用来实际存储各个元素；另一个是`size`，表示`ArrayList`的实际大小。
+`ArrayList` 有两个关键内部属性：`elementData` 是实际存储元素的 `Object` 数组；`size` 表示当前已存储的元素数量。
 
 ```java
 /**
@@ -72,7 +72,7 @@ public void ensureCapacity(int minCapacity) {
 
 `ensureCapacity`方法实现了扩容，主要过程是创建一个新的更大的数组，将原数组中的内容复制过去，并修改`elementData`的引用。
 
-新数组的容量是原来数组的1.5倍（即`newCapacity`）与`minCapacity`中更小的那个。这是JDK 1.6中的计算容量的方式，1.8中的略有不同，更为复杂，感兴趣可以自行看看。
+新数组容量会先按旧容量约 1.5 倍加 1 计算；如果该值仍小于 `minCapacity`，则使用 `minCapacity`。因此，新容量实际取二者中较大的值。这里展示的是 JDK 6 的实现方式，JDK 8 及后续版本的扩容入口和边界处理有所调整，但核心思想仍是保证最小所需容量。
 
 ## add方法
 
@@ -96,7 +96,7 @@ public void add(int index, E element) {
 }
 ```
 
-`add`方法很简单，首先调用`ensureCapacity`方法保证数组容量够用不会溢出，然后将新元素添加到数组的末尾。
+`add` 方法首先调用 `ensureCapacity` 保证数组容量足够，然后将新元素添加到数组末尾。
 
 指定索引位置的`add`方法复杂一些，首先是对`index`的检查，确保所给索引位置在数组之内，调用`ensureCapacity`方法保证数组容量够用，然后以`index`为界将原数组分成前后两半，将后半部分整体右移留出一个空位，最后将新元素放到这个空位上。
 

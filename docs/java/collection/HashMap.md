@@ -1,12 +1,12 @@
 # HashMap 源码分析
 
-HashMap是Java中一个经常用到的容器数据结构，也是面试过程中被问到频率最高的话题之一。常见的问题一般是：HashMap的数据结构是怎样的、HashMap是不是线程安全的、HashMap的死锁是如何发生的，等等。
+`HashMap` 是 Java 中常用的键值映射容器。常见讨论包括其数据结构、线程安全性、扩容机制，以及 JDK 7 并发扩容时可能出现链表成环等问题。
 
-HashMap在不同的JDK版本中其实现有很大差别，所以一些问题需要限定JDK版本才好解答。下面的分析先以最基础的JDK 1.6版本开始，再扩展到其他的JDK版本。
+`HashMap` 在不同 JDK 版本中的实现存在差异，因此分析具体问题时需要明确 JDK 版本。下面先以 JDK 6 实现为基础，再补充 JDK 7 和 JDK 8 中的重要变化。
 
 ## HashMap的基本说明
 
-先看下HashMap类上的注释文档，其实说明了很多问题。
+先查看 `HashMap` 类上的注释文档，其中说明了若干关键特性。
 
 > Hash table based implementation of the Map interface. This implementation provides all of the optional map operations, and permits null values and the null key. (The HashMap class is roughly equivalent to Hashtable, except that it is unsynchronized and permits nulls.) This class makes no guarantees as to the order of the map; in particular, it does not guarantee that the order will remain constant over time.
 
@@ -51,11 +51,11 @@ load factor是衡量HashMap容器盈亏程度的一个指标，当HashMap中元�
 
 > Note that the fail-fast behavior of an iterator cannot be guaranteed as it is, generally speaking, impossible to make any hard guarantees in the presence of unsynchronized concurrent modification. Fail-fast iterators throw ConcurrentModificationException on a best-effort basis. Therefore, it would be wrong to write a program that depended on this exception for its correctness: the fail-fast behavior of iterators should be used only to detect bugs.
 
-最后两段提到了一个叫`fail-fast`的机制。HashMap会判断在迭代过程中是否有其他人的操作修改了内部结构，是的话会抛出一个ConcurrentModificationException异常。一般出现这个异常就说明有其他线程并发地修改了HashMap了。这种快速失败的机制能够使问题尽早的暴露出来。但需要注意的是，快速失败的机制仅仅是作为一种监控预警的功能存在，不能用它来判断是否存在着并发。
+最后两段提到了 `fail-fast` 机制。`HashMap` 的迭代器会在迭代过程中检测集合结构是否被非迭代器自身的操作修改；如果检测到修改，会尽力抛出 `ConcurrentModificationException`。该机制只能用于尽早暴露错误，不能作为并发正确性的保证。
 
 ## HashMap的数据结构
 
-简单来说，HashMap使用了数组+链表的数据结构，数组用于存储key-value数据，链表用于解决hash冲突。
+在 JDK 6 和 JDK 7 中，`HashMap` 主要使用“数组 + 链表”的数据结构：数组用于定位桶，链表用于解决哈希冲突。
 
 ### HashMap的构造函数
 
@@ -323,11 +323,11 @@ void transfer(Entry[] newTable) {
 
 ### 快速失败
 
-我们前面提到了一个`fail-fast`的快速失败机制。
+前文提到了 `fail-fast` 快速失败机制。
 
-在HashMap中的属性中有一个`modCount`的属性，可以理解为记录了HashMap被修改的次数。在添加元素和删除元素的操作中，都会更新这个计数。
+`HashMap` 中的 `modCount` 属性用于记录结构性修改次数。添加或删除映射时，该计数会发生变化。
 
-HashMap的每个迭代器`HashIterator`初始化时，会用变量`expectedModCount`记录此刻的HashMap的`modCount`值。在的`nextEntry`方法中，迭代时会判断HashMap的`modCount`是否等于`expectedModCount`，是的话会抛出`ConcurrentModificationException`异常。`modCount`的值被修改，只会发生在添加元素和删除元素时，表明HashMap在迭代的过程中被修改了，一般是发生在多线程访问的情况。
+`HashMap` 的每个迭代器 `HashIterator` 初始化时，会用 `expectedModCount` 记录当时的 `modCount` 值。在 `nextEntry` 方法中，如果发现当前 `modCount` 不等于 `expectedModCount`，则抛出 `ConcurrentModificationException`。这种情况通常表示迭代过程中发生了非迭代器自身的结构性修改，可能来自同一线程的不规范修改，也可能来自并发访问。
 
 ## JDK 1.7中的HashMap
 
@@ -446,9 +446,9 @@ final int hash(Object k) {
 
 ## JDK 1.8中的HashMap
 
-1.8中的HashMap引入了红黑树的数据结构。我们知道，1.6中的HashMap使用了数组+链表的方式实现，在1.8中，当链表的长度超过了`TREEIFY_THRESHOLD`指定的阈值（默认值是8）时，将链表转换成红黑树。相对地，当红黑树的长度小于`UNTREEIFY_THRESHOLD`设置的阈值时（默认是6）时，将红黑树转换成链表。
+JDK 8 中的 `HashMap` 引入了红黑树结构。JDK 6 中的 `HashMap` 使用数组加链表实现；JDK 8 中，当同一个桶中的链表长度达到树化阈值 `TREEIFY_THRESHOLD`（默认 8），并且表容量至少达到 `MIN_TREEIFY_CAPACITY`（默认 64）时，链表会转换为红黑树。若容量不足，优先触发扩容。相对地，当红黑树节点数量低于 `UNTREEIFY_THRESHOLD`（默认 6）时，树结构可能退化为链表。
 
-同以前版本的HashMap一样，内部数据结构中最重要的一个是table数组，不同的是，1.8中的table数组是一个叫做`Node`类型的数组。
+与以前版本相同，内部数据结构中最重要的是 `table` 数组。不同的是，JDK 8 中的 `table` 是 `Node` 类型数组。
 
 ```java
 /**
@@ -460,7 +460,7 @@ final int hash(Object k) {
 transient Node<K,V>[] table;
 ```
 
-`Node`是HasMap的一个内部类，实现了`Map.Entry`接口，作用同1.6中的`Entry`类型类似。
+`Node` 是 `HashMap` 的内部类，实现了 `Map.Entry` 接口，作用与 JDK 6 中的 `Entry` 类型类似。
 
 ```java
 static class Node<K,V> implements Map.Entry<K,V> {
@@ -480,7 +480,7 @@ static class Node<K,V> implements Map.Entry<K,V> {
 }
 ```
 
-HashMap在1.8中的put方法相对复杂了很多，大致流程如下：
+JDK 8 中 `HashMap` 的 `put` 方法相对更复杂，大致流程如下：
 
 <img src="./image/59ee5965179a568be6e2c25d9481757a.png" />
 
@@ -488,8 +488,8 @@ HashMap在1.8中的put方法相对复杂了很多，大致流程如下：
 2. 根据键值key计算hash值得到插入的数组索引i，如果table[i]==null，直接新建节点添加，转向⑥，如果table[i]不为空，转向3；
 3. 判断table[i]的首个元素是否和key一样，如果相同直接覆盖value，否则转向4，这里的相同指的是hashCode以及equals；
 4. 判断table[i] 是否为treeNode，即table[i] 是否是红黑树，如果是红黑树，则直接在树中插入键值对，否则转向5；
-5. 遍历table[i]，判断链表长度是否大于8，大于8的话把链表转换为红黑树，在红黑树中执行插入操作，否则进行链表的插入操作；遍历过程中若发现key已经存在直接覆盖value即可；
-6. 插入成功后，判断实际存在的键值对数量size是否超多了最大容量threshold，如果超过，进行扩容。
+5. 遍历 `table[i]`。若桶中节点达到树化阈值且表容量满足要求，则将链表转换为红黑树；否则继续以链表方式插入。遍历过程中若发现 `key` 已存在，则直接覆盖 `value`。
+6. 插入成功后，判断实际存在的键值对数量 `size` 是否超过阈值 `threshold`；如果超过，则进行扩容。
 
 源码如下：
 
@@ -542,7 +542,7 @@ final V putVal(int hash, K key, V value, boolean onlyIfAbsent,
 }
 ```
 
-1.8中不同的一点是，处理哈希冲突的时候，链表的插入位置是尾部，而不是像以前版本那样插入在链表的头部。
+JDK 8 的一个重要变化是：处理哈希冲突时，新节点插入链表尾部，而不是像早期版本那样插入链表头部。此变化降低了并发扩容场景下链表成环的风险，但 `HashMap` 仍然不是线程安全容器。
 
 与`put`方法类似，`get`、`remove`等其他方法同样需要处理红黑树的情况，不再赘述。
 

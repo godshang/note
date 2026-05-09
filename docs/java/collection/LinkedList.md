@@ -1,12 +1,12 @@
 # LinkedList 源码分析
 
-`LinkedList`是另一个`List`接口的实现，底层基于链表实现。`LinkedList`继承于`AbstractSequentialList`，实现了`List`、`Deque`、`Cloneable`、`Serializable`接口。
+`LinkedList` 是 `List` 接口的实现之一，底层基于双向链表实现。`LinkedList` 继承自 `AbstractSequentialList`，并实现了 `List`、`Deque`、`Cloneable`、`Serializable` 接口。
 
 <img src="./image/LinkedList.png" />
 
-## Entry内部类
+## Entry 内部类
 
-`Entry`是`LinkedList`的一个私有内部类，表示链表中的一个节点。`Entry`有`next`和`previous`两个属性，分别指向前后节点，因此它是一个双向链表的实现。
+`Entry` 是早期 `LinkedList` 实现中的私有内部类，表示链表节点。`next` 和 `previous` 分别指向后继节点和前驱节点，因此该结构属于双向链表。
 
 ```java
 private static class Entry<E> {
@@ -24,7 +24,7 @@ private static class Entry<E> {
 
 ## 内部属性
 
-同`ArrayList`类似，`LinkedList`内部也有两个重要的属性，`header`是已经创建号的链表头结点，`size`是链表的长度，也就是`LinkedList`的容量。
+在所示实现中，`LinkedList` 维护两个重要属性：`header` 是哨兵头节点，`size` 是链表中实际元素的数量。与数组结构不同，`LinkedList` 不存在预分配容量的概念。
 
 ```java
 private transient Entry<E> header = new Entry<E>(null, null, null);
@@ -48,7 +48,7 @@ public LinkedList(Collection<? extends E> c) {
 
 ## add方法
 
-`add`方法就是一个向链表中添加元素的过程，这个新元素会添加到链表的尾部。
+`add` 方法用于向链表添加元素，新元素默认插入到链表尾部。
 
 ```java
 public boolean add(E e) {
@@ -92,7 +92,7 @@ public E removeFirst() {}
 public E removeLast() {}
 ```
 
-核心的`remove`方法是一个私有方法，实现上就是一个链表中删除元素的过程。
+核心的 `remove` 方法是私有方法，其实现逻辑是断开目标节点与前驱、后继节点之间的链接，并更新链表长度。
 
 ```java
 private E remove(Entry<E> e) {

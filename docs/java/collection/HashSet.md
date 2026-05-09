@@ -19,7 +19,7 @@ private transient HashMap<E,Object> map;
 private static final Object PRESENT = new Object();
 ```
 
-`map`属性是一个`HashMap`类型的实例，也就是`HashSet`中哈希表实现的基础。`PRESENT`属性是一个`Object`类型的实例，作为哈希表`KV`结构中`value`的存在。
+`map` 属性是 `HashMap` 类型的实例，是 `HashSet` 实现去重和存储的基础。`PRESENT` 是一个固定的哨兵对象，作为底层 `HashMap` 中每个键对应的占位值。
 
 ## 构造函数
 
@@ -48,7 +48,7 @@ HashSet(int initialCapacity, float loadFactor, boolean dummy) {
 
 `HashSet`有5个重载的构造函数，围绕哈希表的构造展开。
 
-这几个构造函数中有一个不带`public`修饰符的构造函数，里面使用了`LinkedHashMap`类型，这个构造函数是包访问级别的，用来提供给`LinkedHashSet`使用，对于开发者来说是不可用的。`dummy`这个属性其实是无用的，纯属为了解决和其他同名构造函数的重载时的冲突问题，其实传啥都是没用的。
+这些构造函数中有一个不带 `public` 修饰符的构造函数，内部使用 `LinkedHashMap` 初始化底层映射。该构造函数是包访问级别，主要供 `LinkedHashSet` 调用。`dummy` 参数只用于区分构造方法签名，本身不参与业务逻辑。
 
 ## 主要方法
 
