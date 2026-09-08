@@ -68,7 +68,7 @@ Spring 的 Web 层包括 Web、Servlet、WebSocket 和 Webflux 组件，具体�
 
 * Web 模块：提供了基本的 Web 开发集成特性，例如多文件上传功能、使用的 Servlet 监听器的 IOC 容器初始化以及 Web 应用上下文。
 * Servlet 模块：提供了一个 Spring MVC Web 框架实现。Spring MVC 框架提供了基于注解的请求资源注入、更简单的数据绑定、数据验证等及一套非常易用的 JSP 标签，完全无缝与 Spring 其他技术协作。
-* WebSocket 模块：提供了简单的接口，用户只要实现响应的接口就可以快速的搭建 WebSocket Server，从而实现双向通讯。
+* WebSocket 模块：提供了相应的接口，用户可以据此快速搭建 WebSocket Server，实现双向通信。
 * Webflux 模块： Spring WebFlux 是 Spring Framework 5.x中引入的新的响应式web框架。与Spring MVC不同，它不需要Servlet API，是完全异步且非阻塞的，并且通过Reactor项目实现了Reactive Streams规范。Spring WebFlux 用于创建基于事件循环执行模型的完全异步且非阻塞的应用程序。
 
 此外Spring4.x中还有Portlet 模块，在Spring 5.x中已经移除

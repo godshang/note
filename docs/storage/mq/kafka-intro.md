@@ -4,13 +4,15 @@
 
 # Kafka深度解析
 
+> 版本说明：本文原文发表于 2015 年，源码结构、消息格式和配置项主要对应 Kafka 0.8.x。后续版本的消费者组协调、位点存储、消息批格式以及是否依赖 ZooKeeper 均发生了较大变化；本篇保留旧版本分析口径。
+
 ## 背景介绍
 
 ### Kafka简介
 
 Kafka是一种分布式的，基于发布/订阅的消息系统。主要设计目标如下：
 
-* 以时间复杂度为O(1)的方式提供消息持久化能力，即使对TB级以上数据也能保证常数时间的访问性能
+* 通过顺序写、分段日志和稀疏索引提供高效持久化与按 offset 定位能力。定位通常先查索引，再在局部范围内扫描，不能严格概括为对任意 TB 级数据都保证 O(1) 访问。
 * 高吞吐率。即使在非常廉价的商用机器上也能做到单机支持每秒100K条消息的传输
 * 支持Kafka Server间的消息分区，及分布式消费，同时保证每个partition内的消息顺序传输
 * 同时支持离线数据处理和实时数据处理
@@ -61,8 +63,8 @@ ZeroMQ号称最快的消息队列系统，尤其针对大吞吐量的需求场�
 * ActiveMQ<br>
 ActiveMQ是Apache下的一个子项目。 类似于ZeroMQ，它能够以代理人和点对点的技术实现队列。同时类似于RabbitMQ，它少量代码就可以高效地实现高级应用场景。
 
-* Kafka/Jafka<br>
-Kafka是Apache下的一个子项目，是一个高性能跨语言分布式发布/订阅消息队列系统，而Jafka是在Kafka之上孵化而来的，即Kafka的一个升级版。具有以下特性：快速持久化，可以在O(1)的系统开销下进行消息持久化；高吞吐，在一台普通的服务器上既可以达到10W/s的吞吐速率；完全的分布式系统，Broker、Producer、Consumer都原生自动支持分布式，自动实现负载均衡；支持Hadoop数据并行加载，对于像Hadoop的一样的日志数据和离线分析系统，但又要求实时处理的限制，这是一个可行的解决方案。Kafka通过Hadoop的并行加载机制来统一了在线和离线的消息处理。Apache Kafka相对于ActiveMQ是一个非常轻量级的消息系统，除了性能非常好之外，还是一个工作良好的分布式系统。
+* Kafka<br>
+Kafka 是 Apache 项目，是一个高吞吐的分布式事件流平台。早期版本常被描述为发布/订阅消息系统，支持分区、复制、消费者组以及离线和实时处理。Jafka 是早期对 Kafka 的 Java 移植/复刻项目，不能称为 Kafka 的“升级版”。具体吞吐量取决于消息大小、批处理、确认级别、磁盘、网络和副本数，不能把单机 10 万条/秒视为固定保证。
 
 ## Kafka详解
 
@@ -101,22 +103,22 @@ Topic在逻辑上可以被认为是一个queue。每条消费都必须指定它�
 
 <img src="./image/576764f4757bd743028457325a080325.png" />
 
-每个日志文件都是一个log entry序列，每个log entry包含一个4字节整型数值（值为N+5），1个字节的”magic value”，4个字节的CRC校验码，其后跟N个字节的消息体。每条消息都有一个当前Partition下唯一的64字节的offset，它指明了这条消息的起始位置。磁盘上存储的消息格式如下：
+每个日志文件都是一个 log entry 序列。下面展示的是早期 Kafka 的简化消息格式。每条消息在当前 Partition 内有一个唯一的 **64 位（8 字节）offset**，用于标识其逻辑位置；offset 不是“64 字节”，也不应简单理解为文件中的绝对字节地址。
 
 - message length ： 4 bytes (value: 1+4+n)
 - magic value ： 1 byte
 - crc ： 4 bytes
 - payload ： n bytes
 
-这个log entry并非由一个文件构成，而是分成多个segment，每个segment以该segment第一条消息的offset命名并以“.kafka”为后缀。另外会有一个索引文件，它标明了每个segment下包含的log entry的offset范围，如下图所示。
+一个 Partition 的日志会拆成多个 segment。每个 segment 以其中第一条消息的 base offset 命名，数据文件使用 `.log` 后缀，并配有 `.index` 等索引文件。索引是稀疏索引，保存相对 offset 到文件位置的映射，而不是简单记录整个 segment 的 offset 范围。
 
 <img src="./image/0cfc501edc5e3f7c452e4053478e5596.png" />
 
-因为每条消息都被append到该Partition中，属于顺序写磁盘，因此效率非常高（经验证，顺序写磁盘效率比随机写内存还要高，这是Kafka高吞吐率的一个很重要的保证）。
+消息追加到 Partition 日志，主要采用顺序写，并结合页缓存和批处理获得较高吞吐。某些基准中顺序磁盘 I/O 可能优于随机内存访问，但这取决于硬件和访问模式，不能当作普遍结论。
 
 <img src="./image/4dc26ac13fe327d765fbb6e83ed29571.png" />
 
-每一条消息被发送到broker时，会根据paritition规则选择被存储到哪一个partition。如果partition规则设置的合理，所有消息可以均匀分布到不同的partition里，这样就实现了水平扩展。（如果一个topic对应一个文件，那这个文件所在的机器I/O将会成为这个topic的性能瓶颈，而partition解决了这个问题）。在创建topic时可以在`$KAFKA_HOME/config/server.properties`中指定这个partition的数量(如下所示)，当然也可以在topic创建之后去修改parition数量。
+每一条消息被发送到 broker 时，会根据 partition 规则选择存储到哪个 partition。合理的分区策略可以让消息较均匀地分布并实现水平扩展；带相同 key 的消息通常会进入同一 partition，以保留该 key 范围内的顺序。Topic 创建后可以增加 partition 数量，但这会改变 key 到 partition 的映射，也不能通过普通操作减少数量。
 
 ```
 # The default number of log partitions per topic. More partitions allow greater
@@ -125,7 +127,7 @@ Topic在逻辑上可以被认为是一个queue。每条消费都必须指定它�
 num.partitions=3
 ```
 
-在发送一条消息时，可以指定这条消息的key，producer根据这个key和partition机制来判断将这条消息发送到哪个parition。paritition机制可以通过指定producer的paritition. class这一参数来指定，该class必须实现`kafka.producer.Partitioner`接口。本例中如果key可以被解析为整数则将对应的整数与partition总数取余，该消息会被发送到该数对应的partition。（每个parition都会有个序号）
+在发送消息时可以指定 key，producer 根据 key 和分区器决定目标 partition。旧版 producer 可通过 `partitioner.class` 配置实现 `kafka.producer.Partitioner` 的类。示例中把可解析为整数的 key 对 partition 总数取余；实际实现还要处理负数、分区扩容导致映射变化以及热点 key。
 
 ```
 import kafka.producer.Partitioner;
@@ -197,7 +199,7 @@ log.retention.check.interval.ms=300000
 log.cleaner.enable=false
 ```
 
-这里要注意，因为Kafka读取特定消息的时间复杂度为O(1)，即与文件大小无关，所以这里删除文件与Kafka性能无关，选择怎样的删除策略只与磁盘以及具体的需求有关。另外，Kafka会为每一个consumer group保留一些metadata信息–当前消费的消息的position，也即offset。这个offset由consumer控制。正常情况下consumer会在消费完一条消息后线性增加这个offset。当然，consumer也可将offset设成一个较小的值，重新消费一些消息。因为offet由consumer控制，所以Kafka broker是无状态的，它不需要标记哪些消息被哪些consumer过，不需要通过broker去保证同一个consumer group只有一个consumer能消费某一条消息，因此也就不需要锁机制，这也为Kafka的高吞吐率提供了有力保障。
+Kafka 通过分段日志和稀疏索引定位 offset，查找成本较稳定，但并非严格与文件、缓存和磁盘状态无关。日志保留策略会影响磁盘占用、可回溯窗口和删除开销。每个 consumer group 保存各 partition 的消费 offset；早期版本保存在 ZooKeeper，现代版本通常提交到内部主题 `__consumer_offsets`。Broker 不需要为每条消息记录每个消费者是否已消费，但消费组协调、分区分配和 offset 提交仍有状态。
 
 #### Replication & Leader election
 
@@ -209,9 +211,9 @@ default.replication.factor = 1
 
 该 Replication与leader election配合提供了自动的failover机制。replication对Kafka的吞吐率是有一定影响的，但极大的增强了可用性。默认情况下，Kafka的replication数量为1。　　
 
-每个partition都有一个唯一的leader，所有的读写操作都在leader上完成，follower批量从leader上pull数据。一般情况下partition的数量大于等于broker的数量，并且所有partition的leader均匀分布在broker上。follower上的日志和其leader上的完全一样。
+每个 Partition 都有一个 Leader，Kafka 0.8.x 的客户端读写由 Leader 处理，Follower 批量从 Leader 拉取数据。分区 Leader 会尽量分散到各个 Broker。Follower 持续追赶 Leader；处于 ISR 中也不表示任意时刻末端 offset 与 Leader 完全相同，而是表示副本满足该版本定义的存活和滞后条件。
 
-和大部分分布式系统一样，Kakfa处理失败需要明确定义一个broker是否alive。对于Kafka而言，Kafka存活包含两个条件，一是它必须维护与Zookeeper的session(这个通过Zookeeper的heartbeat机制来实现)。二是follower必须能够及时将leader的writing复制过来，不能“落后太多”。
+和大部分分布式系统一样，Kafka 需要判断 Broker 和副本是否可用。本文对应的 ZooKeeper 架构中，Broker 需要维持 ZooKeeper 会话；Follower 是否属于 ISR，则取决于它能否在允许的滞后时间内持续追赶 Leader。较新的 KRaft 架构不再依赖 ZooKeeper。
 
 leader会track“in sync”的node list。如果一个follower宕机，或者落后太多，leader将把它从”in sync” list中移除。这里所描述的“落后太多”指follower复制的消息落后于leader后的条数超过预定值，该值可在`$KAFKA_HOME/config/server.properties`中配置
 
@@ -225,17 +227,17 @@ replica.lag.time.max.ms=10000
 
 需要说明的是，Kafka只解决”fail/recover”，不处理“Byzantine”（“拜占庭”）问题。
 
-一条消息只有被“in sync” list里的所有follower都从leader复制过去才会被认为已提交。这样就避免了部分数据被写进了leader，还没来得及被任何follower复制就宕机了，而造成数据丢失（consumer无法消费这些数据）。而对于producer而言，它可以选择是否等待消息commit，这可以通过`request.required.acks`来设置。这种机制确保了只要“in sync” list有一个或以上的flollower，一条被commit的消息就不会丢失。
+一条消息复制到当时 ISR 中的所有副本后，才会推进高水位并对消费者可见。Producer 是否等待相应确认由 `request.required.acks` 控制。只有在禁止 unclean leader election、ISR 中仍有包含已提交数据的可用副本等前提下，已提交消息才能在允许的故障范围内保持不丢失；副本数为 1、所有副本同时损坏或允许落后副本当选 Leader 时仍可能丢数据。
 
-这里的复制机制即不是同步复制，也不是单纯的异步复制。事实上，同步复制要求“活着的”follower都复制完，这条消息才会被认为commit，这种复制方式极大的影响了吞吐率（高吞吐率是Kafka非常重要的一个特性）。而异步复制方式下，follower异步的从leader复制数据，数据只要被leader写入log就被认为已经commit，这种情况下如果follwer都落后于leader，而leader突然宕机，则会丢失数据。而Kafka的这种使用“in sync” list的方式则很好的均衡了确保数据不丢失以及吞吐率。follower可以批量的从leader复制数据，这样极大的提高复制性能（批量写磁盘），极大减少了follower与leader的差距（前文有说到，只要follower落后leader不太远，则被认为在“in sync” list里）。
+Kafka 的复制不能简单归类为“所有副本同步完成”或“仅 Leader 写入即提交”。Follower 主动从 Leader 拉取数据，Leader 根据 ISR 推进高水位；生产者是否等待这些条件则由 `acks` 和 `min.insync.replicas` 等配置共同决定。批量复制有利于吞吐量，但可靠性边界仍取决于确认配置和故障时哪些副本仍在 ISR。
 
 上文说明了Kafka是如何做replication的，另外一个很重要的问题是当leader宕机了，怎样在follower中选举出新的leader。因为follower可能落后许多或者crash了，所以必须确保选择“最新”的follower作为新的leader。一个基本的原则就是，如果leader不在了，新的leader必须拥有原来的leader commit的所有消息。这就需要作一个折衷，如果leader在标明一条消息被commit前等待更多的follower确认，那在它die之后就有更多的follower可以作为新的leader，但这也会造成吞吐率的下降。
 
 一种非常常用的选举leader的方式是“majority vote”（“少数服从多数”），但Kafka并未采用这种方式。这种模式下，如果我们有2f+1个replica（包含leader和follower），那在commit之前必须保证有f+1个replica复制完消息，为了保证正确选出新的leader，fail的replica不能超过f个。因为在剩下的任意f+1个replica里，至少有一个replica包含有最新的所有消息。这种方式有个很大的优势，系统的latency只取决于最快的几台server，也就是说，如果replication factor是3，那latency就取决于最快的那个follower而非最慢那个。majority vote也有一些劣势，为了保证leader election的正常进行，它所能容忍的fail的follower个数比较少。如果要容忍1个follower挂掉，必须要有3个以上的replica，如果要容忍2个follower挂掉，必须要有5个以上的replica。也就是说，在生产环境下为了保证较高的容错程度，必须要有大量的replica，而大量的replica又会在大数据量下导致性能的急剧下降。这就是这种算法更多用在Zookeeper这种共享集群配置的系统中而很少在需要存储大量数据的系统中使用的原因。例如HDFS的HA feature是基于majority-vote-based journal，但是它的数据存储并没有使用这种expensive的方式。
 
-实际上，leader election算法非常多，比如Zookeper的Zab, Raft和Viewstamped Replication。而Kafka所使用的leader election算法更像微软的PacificA算法。
+Leader 选举与复制协议有多种实现，例如 ZooKeeper 的 ZAB、Raft 和 Viewstamped Replication。本文讨论的是早期 Kafka 基于 ZooKeeper 控制器与 ISR 的分区 Leader 选举；现代 Kafka 的元数据仲裁可使用 KRaft，但数据分区仍按 ISR 等规则选择 Leader。
 
-Kafka在Zookeeper中动态维护了一个ISR（in-sync replicas） set，这个set里的所有replica都跟上了leader，只有ISR里的成员才有被选为leader的可能。在这种模式下，对于f+1个replica，一个Kafka topic能在保证不丢失已经ommit的消息的前提下容忍f个replica的失败。在大多数使用场景中，这种模式是非常有利的。事实上，为了容忍f个replica的失败，majority vote和ISR在commit前需要等待的replica数量是一样的，但是ISR需要的总的replica的个数几乎是majority vote的一半。
+早期 Kafka 由控制器维护 ISR（in-sync replicas）集合。正常配置下只从 ISR 选举 Leader；ISR 成员不代表字节级始终完全相同，而是满足规定的追赶条件。能否在故障中不丢失已确认消息，取决于复制因子、`acks`、`min.insync.replicas`、是否允许 unclean leader election，以及故障副本的数据是否仍可恢复，不能只用 `f+1` 个副本概括。
 
 虽然majority vote与ISR相比有不需等待最慢的server这一优势，但是Kafka作者认为Kafka可以通过producer选择是否被commit阻塞来改善这一问题，并且节省下来的replica和磁盘使得ISR模式仍然值得。
 

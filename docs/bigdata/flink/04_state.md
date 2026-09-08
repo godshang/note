@@ -41,7 +41,7 @@ Flink针对KeyedState提供了一下可以保存State的数据结构。
 
 ### Operator State
 
-Operator State与Key无关,而是与Operator绑定,整个Operator只双时应一个State
+Operator State 与 key 无关，而是绑定到算子的并行子任务。每个并行实例都维护自己的状态；调整并行度恢复时，Flink 会根据状态类型重新分配这些状态。
 
 Flink针对Operator State提供了以保存State的数据结构。
 
@@ -147,9 +147,9 @@ Flink通过SavePoint功能可以升级程序，然后继续从升级前的那个
 
 1． CheckPoint
 
-应用定时触发，用于保存状态，它会过期，在内部应用失败重启的时候使用。
+通常由系统周期性触发，主要用于故障恢复。旧的 Checkpoint 是否保留取决于保留数量、清理策略以及是否启用了 Externalized Checkpoint，不能简单说“一定会过期”。
 
 2． SavePoint
 
-用户手动执行，是指向CheckPoint的指针，它不会过期，一般在升级的情况下使用。
+通常由用户显式触发，是一份独立、可移植性更强的状态快照，并不是“指向 Checkpoint 的指针”。它主要用于计划内升级、迁移、调整并行度和回滚；生命周期由用户管理，只有确认不再需要后才应删除。
 

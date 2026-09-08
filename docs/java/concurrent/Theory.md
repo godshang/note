@@ -220,7 +220,7 @@ hread 对象的 start() 方法调用先行发生于此线程的每一个动作�
 * 枚举类型
 * Number 部分子类，如 Long 和 Double 等数值包装类型，BigInteger 和 BigDecimal 等大数据类型。但同为 Number 的原子类 AtomicInteger 和 AtomicLong 则是可变的。
 
-对于集合类型，可以使用 Collections.unmodifiableXXX() 方法来获取一个不可变的集合。
+`Collections.unmodifiableXXX()` 返回的是不可修改视图：调用方不能通过该视图修改集合，但底层集合若仍被其他引用修改，视图内容也会变化。真正的不可变集合应进行防御性复制；较新的 JDK 可使用 `List.copyOf`、`Set.copyOf`、`Map.copyOf` 等方法。
 
 2. 绝对线程安全
 

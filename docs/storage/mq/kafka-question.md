@@ -46,9 +46,9 @@ producer端无消息丢失配置如下：
 
 不要使用KafkaProducer中单参数的send方法，因为该send调用仅仅是把消息发出而不会理会消息发送的结果。如果消息发送失败，该方法不会得到任何通知，故可能造成数据的丢失，实际环境中一定要使用带回调机制的send版本。
 
-**Callback逻辑中显示立即关闭producer**
+**Callback 逻辑中显式立即关闭 producer**
 
-在Callback的失败处理逻辑中显示调用KafkaProducer.close(0)，这样做的目的是为了处理消息的乱序问题。若不使用close(0)，默认情况下producer会被允许将未完成的消息发送出去，这样就有可能造成消息乱序。
+在 Callback 的失败处理逻辑中显式调用 `KafkaProducer.close(0)`，目的是停止继续发送未完成消息，降低失败重试造成的乱序风险。这是旧版客户端中的一种处理思路；现代客户端还应结合幂等生产者、合适的 `acks`、重试和 `max.in.flight.requests.per.connection` 配置来确定顺序与可靠性语义。
 
 ### broker端配置
 
@@ -89,7 +89,9 @@ In-sync replica(ISR)称之为同步副本，ISR中的副本都是与Leader进行
 
 **禁用unclean选举**
 
-选择一个同步副本列表中的分区作为leader 分区的过程称为clean leader election。注意，这里要与在非同步副本中选一个分区作为leader分区的过程区分开，在非同步副本中选一个分区作为leader的过程称之为unclean leader election。由于ISR是动态调整的，所以会存在ISR列表为空的情况，通常来说，非同步副本落后 Leader 太多，因此，如果选择这些副本作为新 Leader，就可能出现数据的丢失。毕竟，这些副本中保存的消息远远落后于老 Leader 中的消息。在 Kafka 中，选举这种副本的过程可以通过Broker 端参数unclean.leader.election.enable控制是否允许 Unclean 领导者选举。开启 Unclean 领导者选举可能会造成数据丢失，但好处是，它使得分区 Leader 副本一直存在，不至于停止对外提供服务，因此提升了高可用性。反之，禁止 Unclean Leader 选举的好处在于维护了数据的一致性，避免了消息丢失，但牺牲了高可用性。分布式系统的CAP理论说的就是这种情况。不幸的是，unclean leader election的选举过程仍可能会造成数据的不一致，因为同步副本并不是完全同步的。由于复制是异步完成的，因此无法保证follower可以获取最新消息。比如Leader分区的最后一条消息的offset是100，此时副本的offset可能不是100，这受到两个参数的影响：
+从 ISR 中选择新 Leader 称为 clean leader election；从 ISR 之外选择落后副本称为 unclean leader election。非同步副本可能缺少旧 Leader 上已经可见的消息，因此让它成为新 Leader 可能造成日志截断和数据丢失。Broker 参数 `unclean.leader.election.enable` 控制是否允许这种选举：允许时提高没有 ISR 可用场景下恢复服务的可能性，但接受数据丢失风险；禁止时宁可让分区暂时不可用。这个取舍与 CAP 有相似直觉，但不能说“CAP 理论说的就是 unclean leader election”，因为 CAP 专门讨论网络分区条件下的一致性与可用性。
+
+即使只从 ISR 选举，Follower 也不要求在任意瞬间与 Leader 的日志末端完全相同；关键是它必须覆盖已经提交到高水位的数据。Leader 末端 offset 为 100 时，Follower 可能暂时小于 100，具体是否仍留在 ISR 受以下参数影响：
 
 * replica.lag.time.max.ms：同步副本滞后与leader副本的时间
 * zookeeper.session.timeout.ms：与zookeeper会话超时时间
@@ -103,7 +105,7 @@ In-sync replica(ISR)称之为同步副本，ISR中的副本都是与Leader进行
 Producer
 
 * retries=Long.MAX_VALUE设置 retries 为一个较大的值。这里的 retries 同样是 Producer 的参数，对应前面提到的 Producer 自动重试。当出现网络的瞬时抖动时，消息发送可能会失败，此时配置了 retries > 0 的 Producer 能够自动重试消息发送，避免消息丢失。
-* acks=all设置 acks = all。acks 是 Producer 的一个参数，代表了你对“已提交”消息的定义。如果设置成 all，则表明所有副本 Broker 都要接收到消息，该消息才算是“已提交”。这是最高等级的“已提交”定义。
+* `acks=all`：Leader 会等待当前 ISR 满足确认条件后再应答，并不表示所有配置的副本都必须收到。通常还要把 `min.insync.replicas` 设为大于 1，并使用足够的复制因子，才能在副本故障时拒绝降低可靠性写入。
 * max.in.flight.requests.per.connections=1该参数指定了生产者在收到服务器晌应之前可以发送多少个消息。它的值越高，就会占用越多的内存，不过也会提升吞吐量。把它设为1 可以保证消息是按照发送的顺序写入服务器的，即使发生了重试。
 * Producer要使用带有回调通知的API，也就是说不要使用 producer.send(msg)，而要使用 producer.send(msg, callback)。
 * 其他错误处理使用生产者内置的重试机制，可以在不造成消息丢失的情况下轻松地处理大部分错误，不过 仍然需要处理其他类型的错误，例如消息大小错误、序列化错误等等。
@@ -116,7 +118,7 @@ Consumer
 
 ## Q3：Kafka可以保障永久不丢失数据吗？
 
-上面分析了一些保障数据不丢失的措施，在一定程度上可以避免数据的丢失。但是请注意：Kafka 只对“已提交”的消息（committed message）做有限度的持久化保证。所以说，Kafka不能够完全保证数据不丢失，需要做出一些权衡。首先，要理解什么是已提交的消息，当 Kafka 的若干个 Broker 成功地接收到一条消息并写入到日志文件后，它们会告诉生产者程序这条消息已成功提交。此时，这条消息在 Kafka 看来就正式变为已提交消息了。所以说无论是ack=all，还是ack=1,不论哪种情况，Kafka 只对已提交的消息做持久化保证这件事情是不变的。其次，要理解有限度的持久化保证，也就是说 Kafka 不可能保证在任何情况下都做到不丢失消息。必须保证Kafka的Broker是可用的，换句话说，假如消息保存在 N 个 Kafka Broker 上，那么这个前提条件就是这 N 个 Broker 中至少有 1 个存活。只要这个条件成立，Kafka 就能保证你的这条消息永远不会丢失。总结一下，Kafka 是能做到不丢失消息的，只不过这些消息必须是已提交的消息，而且还要满足一定的条件。
+Kafka 不能在任意故障模型下承诺永久不丢数据。可靠性是复制因子、`acks`、`min.insync.replicas`、unclean leader election、日志刷盘/磁盘可靠性和生产者重试共同作用的结果。即使某个 Broker 存活，也不能据此断言数据一定存在：存活节点可能没有该分区的最新副本。生产端还要处理“Broker 已写入但 ACK 丢失”的不确定结果，使用幂等生产者或业务幂等键避免重试产生重复；跨分区原子写入则需要 Kafka 事务。
 
 ## Q4：如何保障Kafka中的消息是有序的？
 

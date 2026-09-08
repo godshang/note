@@ -8,15 +8,15 @@ Flink是一个开源的流处理框架，它具有以下特点。
 
 * 分布式：Flink程序可以运行在多台机器上。
 * 高性能：处理性能比较高。
-* 高可用：由于Flink程序本身是稳定的，因此它支持高可用性（High Availability，HA）。
-* 准确：Flink可以保证数据处理的准确性。
+* 高可用：Flink 可通过 JobManager 高可用、Checkpoint、重启策略等机制降低单点故障影响；高可用来自部署与容错配置，而不是“程序本身稳定”。
+* 处理语义：Flink 的状态快照能够提供一致状态恢复。端到端是否达到 exactly-once，还取决于 Source 能否重放、Sink 是否支持事务或幂等写入，以及 Checkpoint 是否正确配置。
 
 Flink主要由Java代码实现，它同时支持实时流处理和批处理。对于Flink而言，作为一个流处理框架，批数据只是流数据的一个极限特例而已。此外，Flink还支持迭代计算、内存管理和程序优化，这是它的原生特性。
 
 Flink的功能特性如下。
 
 * 流式优先：Flink可以连续处理流式数据。
-* 容错：Flink提供有状态的计算，可以记录数据的处理状态，当数据处理失败的时候，能够无缝地从失败中恢复，并保持Exactly-once。
+* 容错：Flink 提供有状态计算和一致性 Checkpoint。发生故障后可以从最近一次成功快照恢复；恢复会产生停顿，并可能重放快照之后的数据，因此不能称为“无缝”。Flink 算子状态可保持 exactly-once，端到端保证还需要 Source 与 Sink 配合。
 * 可伸缩：Flink中的一个集群支持上千个节点。
 * 性能：Flink支持高吞吐、低延迟。
 
@@ -41,7 +41,7 @@ Flink中提供了3个组件，包括DataSource、Transformation和DataSink。
 
 ## Flink流处理（Streaming）与批处理（Batch）
 
-在大数据处理领域，批处理与流处理一般被认为是两种截然不同的任务，一个大数据框架一般会被设计为只能处理其中一种任务。比如，Storm只支持流处理任务，而MapReduce、Spark只支持批处理任务。Spark Streaming是Apache Spark之上支持流处理任务的子系统，这看似是一个特例，其实不然——Spark Streaming采用了一种Micro-Batch架构，即把输入的数据流切分成细粒度的Batch，并为每一个Batch数据提交一个批处理的Spark任务，所以Spark Streaming本质上还是基于Spark批处理系统对流式数据进行处理，和Storm等完全流式的数据处理方式完全不同。
+在早期大数据框架中，批处理与流处理经常由不同系统承担：MapReduce 面向有界批任务，Storm 面向逐条流处理；Spark Core 以批处理为基础，Spark Streaming 则用 micro-batch 处理连续数据流。Flink 采用流式执行引擎，并把有界数据视作流的特例。这里比较的是当时的经典执行模型，不表示后续 Spark Structured Streaming 等能力仍“只支持批处理”。
 
 通过灵活的执行引擎，Flink能够同时支持批处理任务与流处理任务。在执行引擎层级，流处理系统与批处理系统最大的不同在于节点间的数据传输方式。
 
@@ -70,7 +70,7 @@ Storm是比较早的流式计算框架，后来又出现了Spark Streaming和Tri
 
 * 模型：Storm和Flink是真正的一条一条处理数据；而Trident（Storm的封装框架）和SparkStreaming其实都是小批处理，一次处理一批数据（小批量）。
 * API：Storm和Trident都使用基础API进行开发，比如实现一个简单的sum求和操作；而SparkStreaming和Flink中都提供封装后的高阶函数，可以直接拿来使用，这样就比较方便了。
-* 保证次数：在数据处理方面，Storm可以实现至少处理一次，但不能保证仅处理一次，这样就会导致数据重复处理问题，所以针对计数类的需求，可能会产生一些误差；Trident通过事务可以保证对数据实现仅一次的处理，Spark Streaming和Flink也是如此。
+* 处理语义：Storm Core 通常提供 at-least-once，失败重放可能造成重复；Trident、Spark Streaming 和 Flink 可以在特定状态与输出条件下提供 exactly-once 效果。是否真正端到端 exactly-once 仍取决于数据源、状态后端、输出系统以及幂等或事务实现，不能只由框架名称判断。
 * 容错机制：Storm和Trident可以通过ACK机制实现数据的容错机制，而Spark Streaming和Flink可以通过CheckPoint机制实现容错机制。
 * 延时：表示数据处理的延时情况，因此Storm和Flink接收到一条数据就处理一条数据，其数据处理的延时性是很低的；而Trident和Spark Streaming都是小型批处理，它们数据处理的延时性相对会偏高。
 * 吞吐量：Storm的吞吐量其实也不低，只是相对于其他几个框架而言较低；Trident属于中等；而Spark Streaming和Flink的吞吐量是比较高的。
@@ -79,7 +79,7 @@ Storm是比较早的流式计算框架，后来又出现了Spark Streaming和Tri
 
 前面我们分析了3种实时计算框架，那么公司在实际操作时到底选择哪种技术框架呢？下面我们来分析一下。
 
-* 需要关注流数据是否需要进行状态管理，如果是，那么只能在Trident、Spark Streaming和Flink中选择一个。
+* 需要关注状态规模、恢复时间、状态一致性和运维能力。多个框架都能管理状态，只是模型与保证不同，不能把“需要状态”作为排除某个方案的唯一判断。
 * 需要考虑项目对At-least-once（至少一次）或者Exactly-once（仅一次）消息投递模式是否有特殊要求，如果必须要保证仅一次，也不能选择Storm。
 * 对于小型独立的项目，并且需要低延迟的场景，建议使用Storm，这样比较简单。
 * 如果你的项目已经使用了Spark，并且秒级别的实时处理可以满足需求的话，建议使用SparkStreaming。

@@ -36,9 +36,9 @@
 
 > If many mappings are to be stored in a HashMap instance, creating it with a sufficiently large capacity will allow the mappings to be stored more efficiently than letting it perform automatic rehashing as needed to grow the table.
 
-第三段、第四段和第五段具体说明了capacity和load factor是如何影响HashMap的效率。capacity越大、load factor越小，HashMap的效率就越低。
+第三段、第四段和第五段说明了 capacity 和 load factor 如何影响 `HashMap` 的时间与空间开销。容量过大会增加空桶和迭代成本；负载因子过小会浪费空间，过大则会增加哈希冲突和查找成本。不能简单概括为“容量越大、负载因子越小，效率就越低”。
 
-load factor是衡量HashMap容器盈亏程度的一个指标，当HashMap中元素的个数大于capacity * load factor的值的时候，HashMap会进行rehash的操作，rehash实际上是内部数据结构重建的一个过程。默认的load factor是0.75，这是一个折中的值，在大多数情况下运行良好。更大的load factor会降低内存空间的使用率，但是会增加查找时的时间消耗。
+load factor 用来衡量哈希表允许达到的装载程度。当 `HashMap` 中元素个数超过 `capacity * load factor` 时，会进行 rehash，即重建内部结构。默认值 0.75 在时间与空间之间折中良好。更大的 load factor 会提高空间利用率，但通常会增加哈希冲突和查找成本。
 
 > Note that this implementation is not synchronized. If multiple threads access a hash map concurrently, and at least one of the threads modifies the map structurally, it must be synchronized externally. (A structural modification is any operation that adds or deletes one or more mappings; merely changing the value associated with a key that an instance already contains is not a structural modification.) This is typically accomplished by synchronizing on some object that naturally encapsulates the map. If no such object exists, the map should be "wrapped" using the {@link Collections#synchronizedMap Collections.synchronizedMap} method. This is best done at creation time, to prevent accidental unsynchronized access to the map:
 > ```

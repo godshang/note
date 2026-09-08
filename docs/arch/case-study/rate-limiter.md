@@ -1,7 +1,8 @@
 # 限流
 
-在高并发场景下有三把利器保护系统：缓存、降级、和限流。缓存的目的是提升系统的访问你速度和增大系统能处理的容量；降级是当服务出问题或影响到核心流程的性能则需要暂时屏蔽掉。而有些场景则需要限制并发请求量，如秒杀、抢购、发帖、评论、恶意爬虫等。
-限流算法
+在高并发场景下常使用缓存、降级和限流保护系统。缓存用于提升访问速度并降低后端负载；降级是在依赖异常或资源紧张时暂时关闭非核心能力；限流则用于约束请求速率或并发量，如秒杀、抢购、发帖、评论和爬虫防护等场景。
+
+## 限流算法
 
 常见的限流算法有：计数器，漏桶、令牌桶。
 
@@ -49,7 +50,7 @@ class Funnel(object):
         self.left_quota = capacity  # 漏斗剩余空间         
         self.leaking_ts = time.time()  # 上一次漏水时间 
     
-     def make_space(self):         
+    def make_space(self):
         now_ts = time.time()         
         delta_ts = now_ts - self.leaking_ts  # 距离上一次漏水过去了多久         
         delta_quota = delta_ts * self.leaking_rate  # 又可以腾出不少空间了         
@@ -60,7 +61,7 @@ class Funnel(object):
         if self.left_quota > self.capacity:  # 剩余空间不得高于容量             
             self.left_quota = self.capacity 
 
-     def watering(self, quota):         
+    def watering(self, quota):
         self.make_space()         
         if self.left_quota >= quota:  # 判断剩余空间是否足够             
             self.left_quota -= quota             
@@ -88,7 +89,7 @@ Funnel 对象的 make_space 方法是漏斗算法的核心，其在每次灌水�
 
 但是有个问题，我们无法保证整个过程的原子性。从 hash 结构中取值，然后在内存里运算，再回填到 hash 结构，这三个过程无法原子化，意味着需要进行适当的加锁控制。而一旦加锁，就意味着会有加锁失败，加锁失败就需要选择重试或者放弃。 如果重试的话，就会导致性能下降。如果放弃的话，就会影响用户体验。同时，代码的复杂度也跟着升高很多。
 
-Redis 4.0提供了一个限流Redis模块，名称为redis-cell，该模块提供漏斗算法，并提供原子的限流指令。
+`redis-cell` 是独立的 Redis 模块，不是 Redis 4.0 核心自带功能。它实现了基于 GCRA（Generic Cell Rate Algorithm）的原子限流命令 `CL.THROTTLE`，行为与可突发的漏桶模型相近。使用前需要单独安装并加载该模块。
 
 该模块只有一条指令cl.throttle，其参数和返回值比较复杂。
 
@@ -105,7 +106,7 @@ Redis 4.0提供了一个限流Redis模块，名称为redis-cell，该模块提�
 5) (integer) 2    # 多长时间后，漏斗完全空出来，单位秒
 ```
 
-在执行限流指令时，如果被拒绝了，就需要丢弃或重试。cl.throttle 指令考虑的非常周到，连重试时间都帮你算好了，直接取返回结果数组的第四个值进行 sleep 即可，如果不想阻塞线程，也可以异步定时任务来重试。 
+在执行限流指令时，如果被拒绝，可以直接失败、排队或按返回的重试时间稍后重试。服务线程通常不应直接 `sleep`，否则会占用工作线程；更适合由客户端退避、延迟队列或异步调度器处理。
 
 ## 令牌桶
 

@@ -1,5 +1,7 @@
 # Apollo调试环境搭建
 
+> 本文使用的是早期 Apollo 单仓库结构，截图和启动参数依赖当时的 `apollo-assembly` 模块。不要直接套用最新 `master`：复现源码分析时应检出与文章代码一致的历史 tag；新版本的模块拆分和启动方式请以对应 tag 的官方文档为准。
+
 ## 依赖工具
 
 * JDK ：1.8+
@@ -13,11 +15,12 @@ Apollo服务端项目地址：https://github.com/apolloconfig/apollo
 
 Java客户端项目地址：https://github.com/apolloconfig/apollo-java
 
-通过`git clone`命令拉取`master`分支代码：
+先克隆仓库并用 `git tag --list` 查看历史标签，再检出与本文源码结构一致的标签。`apollo-java` 是客户端拆分后的独立仓库；若所选旧版本的客户端仍在 `apollo` 仓库中，则无需再克隆它。
 
 ```
-git clone git@github.com:apolloconfig/apollo.git
-git clone git@github.com:apolloconfig/apollo-java.git
+git clone https://github.com/apolloconfig/apollo.git
+cd apollo
+git tag --list
 ```
 
 ## 创建数据库
@@ -33,7 +36,7 @@ Apollo唯一依赖的就是数据库，服务端有两个数据库：
 
 ## 启动ConfigService & AdminService
 
-启动`apollo-adminservice`和`admin-configservice`项目，可以基于`apollo-assembly`项目启动，也可以分别启动`ConfigServiceApplication`和`AdminServiceApplication`
+启动 `apollo-adminservice` 和 `apollo-configservice`，可以基于旧版的 `apollo-assembly` 聚合模块启动，也可以分别运行 `ConfigServiceApplication` 和 `AdminServiceApplication`。
 
 新建`ConfigServiceApplication`和`AdminServiceApplication`
 
@@ -66,13 +69,15 @@ Apollo唯一依赖的就是数据库，服务端有两个数据库：
     > -Dspring.datasource.url=jdbc:mysql://localhost:3306/ApolloPortalDB?characterEncoding=utf8
     > -Dspring.datasource.username=root
     > -Dspring.datasource.password=123456
-* `program arguments`: `--configservice --adminservice`
-* `Use classpath of module`: `apollo-assembly`
+* `program arguments`: 留空
+* `Use classpath of module`: `apollo-portal`
 
 启动成功后，访问`http://localhost:8070`，使用内置账号登陆即可
 
-* username: Apollo
+* username: apollo
 * password: admin
+
+内置账号只适合本地调试。共享或生产环境必须启用正式认证并修改默认凭据，数据库密码也不应直接提交到启动配置中。
 
 ![](./image/ba638bc8bc844e368d719275f87bd11a.png)
 

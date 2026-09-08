@@ -42,21 +42,21 @@ public interface SortedMap<K,V> extends Map<K,V> {
 
 ```java
 public interface NavigableMap<K,V> extends SortedMap<K,V> {
-    // 返回小于key的第一个元素
+    // 返回严格小于 key 的最大键对应的元素
     Map.Entry<K,V> lowerEntry(K key);
-    // 返回小于key的第一个键
+    // 返回严格小于 key 的最大键
     K lowerKey(K key);
-    // 返回小于等于key的第一个元素
+    // 返回小于等于 key 的最大键对应的元素
     Map.Entry<K,V> floorEntry(K key);
-    // 返回小于等于key的第一个键
+    // 返回小于等于 key 的最大键
     K floorKey(K key);
-    // 返回大于或者等于key的第一个元素
+    // 返回大于等于 key 的最小键对应的元素
     Map.Entry<K,V> ceilingEntry(K key);
-    // 返回大于或者等于key的第一个键
+    // 返回大于等于 key 的最小键
     K ceilingKey(K key);
-    // 返回大于key的第一个元素
+    // 返回严格大于 key 的最小键对应的元素
     Map.Entry<K,V> higherEntry(K key);
-    // 返回大于key的第一个键
+    // 返回严格大于 key 的最小键
     K higherKey(K key);
     // 返回集合中第一个元素
     Map.Entry<K,V> firstEntry();

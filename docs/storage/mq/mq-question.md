@@ -288,13 +288,15 @@ RabbitMQ 如果丢失了数据，主要是因为你消费的时候，刚消费�
 
 一个消费者一秒是 1000 条，一秒 3 个消费者是 3000 条，一分钟就是 18 万条。所以如果你积压了几百万到上千万的数据，即使消费者恢复了，也需要大概 1 小时的时间才能恢复过来。
 
-一般这个时候，只能临时紧急扩容了，具体操作步骤和思路如下：
+处理积压前应先停止继续恶化：确认生产速率、消费速率、积压量和预计追平时间，修复消费失败或下游瓶颈，并评估数据库、RPC 等下游能否承受扩容后的流量。只有下游仍有余量时，增加消费并行度才有意义。
 
-* 先修复 consumer 的问题，确保其恢复消费速度，然后将现有 consumer 都停掉。
-* 新建一个 topic，partition 是原来的 10 倍，临时建立好原先 10 倍的 queue 数量。
-* 然后写一个临时的分发数据的 consumer 程序，这个程序部署上去消费积压的数据，消费之后不做耗时的处理，直接均匀轮询写入临时建立好的 10 倍数量的 queue。
-* 接着临时征用 10 倍的机器来部署 consumer，每一批 consumer 消费一个临时 queue 的数据。这种做法相当于是临时将 queue 资源和 consumer 资源扩大 10 倍，以正常的 10 倍速度来消费数据。
-* 等快速消费完积压数据之后，得恢复原先部署的架构，重新用原先的 consumer 机器来消费消息。
+一种临时扩容思路如下，但并不是唯一方案：
+
+* 先修复 consumer，暂停或限流非必要生产流量，并记录切换位点。
+* 如果原主题/队列的分区数限制了并行度，可以建立更多分区的临时主题，并由轻量分发程序转发积压消息。
+* 扩容消费者时同步限制对下游的并发，避免把 MQ 积压转移成数据库或 RPC 故障。
+* 分发与业务消费都要保证幂等，并保留失败记录；转发成功后才能确认原消息，业务处理成功后才能确认临时消息。
+* 积压清空后按位点核对消息数量与业务结果，再逐步恢复原拓扑。若中间件支持直接增加分区/队列且业务不依赖全局顺序，应优先使用原生扩容能力，减少二次转发风险。
 
 ### mq 中的消息过期失效了
 
@@ -334,14 +336,19 @@ public ConsumeConcurrentlyStatus consumeMessage(
     String maxOffset =
             msgs.get(0).getProperty(Message.PROPERTY_MAX_OFFSET);
     long diff = Long.parseLong(maxOffset) - offset;
-    if (diff > 100000) {
-        // TODO 消息堆积情况的特殊处理
+    if (diff > 100000 && isNonCritical(msgs)) {
+        // 只有业务明确允许丢弃时，才在审计或归档后确认消息。
+        auditAndDiscard(msgs);
         return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
     }
-    // TODO 正常消费过程
-    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+    boolean success = consumeNormally(msgs);
+    return success
+            ? ConsumeConcurrentlyStatus.CONSUME_SUCCESS
+            : ConsumeConcurrentlyStatus.RECONSUME_LATER;
 }
 ```
+
+上例中的 `isNonCritical`、`auditAndDiscard` 和 `consumeNormally` 是业务侧伪代码。关键点是：返回 `CONSUME_SUCCESS` 会推进消费位点，因此只有处理成功或业务已经明确接受并记录丢弃时才能返回成功；不能仅因积压量超过阈值就静默丢消息。
 
 ### 4. 优化每条消息消费过程
 

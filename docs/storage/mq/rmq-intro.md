@@ -1,5 +1,7 @@
 # RocketMQ架构设计
 
+> 本文主要描述 RocketMQ 4.3.0 前后的实现。保留旧版架构与源码细节；部署新版本时，线程模型、主从复制和配置项应以所用版本文档为准。
+
 RocketMQ一个纯java、分布式、队列模型的开源消息中间件，前身是MetaQ，是阿里研发的一个队列模型的消息中间件，后开源给apache基金会成为了apache的顶级开源项目，具有高性能、高可靠、高实时、分布式特点。
 
 ## 技术架构
@@ -12,7 +14,7 @@ RocketMQ架构上主要分为四部分，如上图所示:
 
 * Consumer：消息消费的角色，支持分布式集群方式部署。支持以push推，pull拉两种模式对消息进行消费。同时也支持集群方式和广播方式的消费，它提供实时消息订阅机制，可以满足大多数用户的需求。
 
-* NameServer：NameServer是一个非常简单的Topic路由注册中心，其角色类似Dubbo中的zookeeper，支持Broker的动态注册与发现。主要包括两个功能：Broker管理，NameServer接受Broker集群的注册信息并且保存下来作为路由信息的基本数据。然后提供心跳检测机制，检查Broker是否还存活；路由信息管理，每个NameServer将保存关于Broker集群的整个路由信息和用于客户端查询的队列信息。然后Producer和Conumser通过NameServer就可以知道整个Broker集群的路由信息，从而进行消息的投递和消费。NameServer通常也是集群的方式部署，各实例间相互不进行信息通讯。Broker是向每一台NameServer注册自己的路由信息，所以每一个NameServer实例上面都保存一份完整的路由信息。当某个NameServer因某种原因下线了，Broker仍然可以向其它NameServer同步其路由信息，Producer,Consumer仍然可以动态感知Broker的路由的信息。
+* NameServer：NameServer 是轻量级的 Topic 路由注册中心，支持 Broker 的动态注册与发现。每个 NameServer 独立保存 Broker 上报的路由和队列信息，节点之间不互相同步；Broker 会向配置的每个 NameServer 分别注册。Producer 和 Consumer 从可用的 NameServer 查询路由，因此单个 NameServer 下线不会直接中断已有 Broker 的消息收发。
 
 * BrokerServer：Broker主要负责消息的存储、投递和查询以及服务高可用保证，为了实现这些功能，Broker包含了以下几个重要子模块。
 
@@ -57,13 +59,13 @@ RocketMQ 网络部署特点：
 
 (3) IndexFile：IndexFile（索引文件）提供了一种可以通过key或时间区间来查询消息的方法。Index文件的存储位置是：$HOME \store\index\${fileName}，文件名fileName是以创建时的时间戳命名的，固定的单个IndexFile文件大小约为400M，一个IndexFile可以保存 2000W个索引，IndexFile的底层存储设计为在文件系统中实现HashMap结构，故rocketmq的索引文件其底层实现为hash索引。
 
-在上面的RocketMQ的消息存储整体架构图中可以看出，RocketMQ采用的是混合型的存储结构，即为Broker单个实例下所有的队列共用一个日志数据文件（即为CommitLog）来存储。RocketMQ的混合型存储结构(多个Topic的消息实体内容都存储于一个CommitLog中)针对Producer和Consumer分别采用了数据和索引部分相分离的存储结构，Producer发送消息至Broker端，然后Broker端使用同步或者异步的方式对消息刷盘持久化，保存至CommitLog中。只要消息被刷盘持久化至磁盘文件CommitLog中，那么Producer发送的消息就不会丢失。正因为如此，Consumer也就肯定有机会去消费这条消息。当无法拉取到消息后，可以等下一次消息拉取，同时服务端也支持长轮询模式，如果一个消息拉取请求未拉取到消息，Broker允许等待30s的时间，只要这段时间内有新消息到达，将直接返回给消费端。这里，RocketMQ的具体做法是，使用Broker端的后台服务线程—ReputMessageService不停地分发请求并异步构建ConsumeQueue（逻辑消费队列）和IndexFile（索引文件）数据。
+在上面的RocketMQ的消息存储整体架构图中可以看出，RocketMQ采用的是混合型的存储结构，即为Broker单个实例下所有的队列共用一个日志数据文件（即为CommitLog）来存储。RocketMQ的混合型存储结构（多个Topic的消息实体内容都存储于一个CommitLog中）针对Producer和Consumer分别采用了数据和索引部分相分离的存储结构。Producer发送消息至Broker端，然后Broker端使用同步或者异步的方式刷盘。消息成功刷盘可以抵御单机进程崩溃，但不能单独承诺消息永不丢失；可靠性还取决于主从复制模式、确认条件、磁盘故障、Broker故障切换和生产者重试。Consumer是否最终成功处理还取决于消费确认与重试策略。服务端支持长轮询：请求暂时未拉取到消息时，Broker可等待一段时间，新消息到达后直接返回。Broker端的ReputMessageService会异步构建ConsumeQueue（逻辑消费队列）和IndexFile（索引文件）数据。
 
 ### 页缓存与内存映射
 
 页缓存（PageCache)是OS对文件的缓存，用于加速对文件的读写。一般来说，程序对文件进行顺序读写的速度几乎接近于内存的读写速度，主要原因就是由于OS使用PageCache机制对读写访问操作进行了性能优化，将一部分的内存用作PageCache。对于数据的写入，OS会先写入至Cache内，随后通过异步的方式由pdflush内核线程将Cache内的数据刷盘至物理磁盘上。对于数据的读取，如果一次读取文件时出现未命中PageCache的情况，OS从物理磁盘上访问读取文件的同时，会顺序对其他相邻块的数据文件进行预读取。
 
-在RocketMQ中，ConsumeQueue逻辑消费队列存储的数据较少，并且是顺序读取，在page cache机制的预读取作用下，Consume Queue文件的读性能几乎接近读内存，即使在有消息堆积情况下也不会影响性能。而对于CommitLog消息存储的日志数据文件来说，读取消息内容时候会产生较多的随机访问读取，严重影响性能。如果选择合适的系统IO调度算法，比如设置调度算法为“Deadline”（此时块存储采用SSD的话），随机读的性能也会有所提升。
+ConsumeQueue 条目较小且访问模式规整，通常容易受益于 Page Cache 和预读。消息堆积仍可能造成工作集超过内存并触发磁盘读取，不能认为对性能没有影响。读取 CommitLog 中不连续的消息可能产生随机 I/O，实际影响取决于缓存命中率、磁盘类型和访问模式；操作系统 I/O 调度器也应结合内核与存储设备选择。
 
 另外，RocketMQ主要通过MappedByteBuffer对文件进行读写操作。其中，利用了NIO中的FileChannel模型将磁盘上的物理文件直接映射到用户态的内存地址中（这种Mmap的方式减少了传统IO将磁盘文件数据在操作系统内核地址空间的缓冲区和用户应用程序地址空间的缓冲区之间来回进行拷贝的性能开销），将对文件的操作转化为直接对内存地址进行操作，从而极大地提高了文件的读写效率（正因为需要使用内存映射机制，故RocketMQ的文件存储都使用定长结构来存储，方便一次将整个文件映射至内存）。
 
@@ -105,7 +107,7 @@ code |int | 请求操作码，应答方根据不同的请求码进行不同的�
 language | LanguageCode | 请求方实现的语言 | 应答方实现的语言
 version | int | 请求方程序的版本 | 应答方程序的版本
 opaque | int |相当于requestId，在同一个连接上的不同请求标识码，与响应消息中的相对应 | 应答不做修改直接返回
-flag | int | 区分是普通RPC还是onewayRPC得标志 | 区分是普通RPC还是onewayRPC得标志
+flag | int | 区分普通 RPC 和 oneway RPC 的标志 | 区分普通 RPC 和 oneway RPC 的标志
 remark | String | 传输自定义文本信息 | 传输自定义文本信息
 extFields | HashMap<String, String> | 请求自定义扩展信息 | 响应自定义扩展信息
 
@@ -134,7 +136,7 @@ RocketMQ的RPC通信采用Netty组件作为底层通信库，同样也遵循了R
 
 <img src="./image/746f7356480f5531d7b2ea69b6485b9e.png" />
 
-上面的框图中可以大致了解RocketMQ中NettyRemotingServer的Reactor 多线程模型。一个 Reactor 主线程（eventLoopGroupBoss，即为上面的1）负责监听 TCP网络连接请求，建立好连接，创建SocketChannel，并注册到selector上。RocketMQ的源码中会自动根据OS的类型选择NIO和Epoll，也可以通过参数配置）,然后监听真正的网络数据。拿到网络数据后，再丢给Worker线程池（eventLoopGroupSelector，即为上面的“N”，源码中默认设置为3），在真正执行业务逻辑之前需要进行SSL验证、编解码、空闲检查、网络连接管理，这些工作交给defaultEventExecutorGroup（即为上面的“M1”，源码中默认设置为8）去做。而处理业务操作放在业务线程池中执行，根据 RomotingCommand 的业务请求码code去processorTable这个本地缓存变量中找到对应的 processor，然后封装成task任务后，提交给对应的业务processor处理线程池来执行（sendMessageExecutor，以发送消息为例，即为上面的 “M2”）。从入口到业务逻辑的几个步骤中线程池一直再增加，这跟每一步逻辑复杂性相关，越复杂，需要的并发通道越宽。
+上面的框图展示了RocketMQ中NettyRemotingServer的Reactor多线程模型。Reactor主线程（eventLoopGroupBoss，即图中的1）监听TCP连接请求，建立SocketChannel并注册到selector。源码会根据操作系统和配置选择NIO或Epoll。网络事件交给Worker线程池（eventLoopGroupSelector，即图中的N）；SSL验证、编解码、空闲检查和连接管理由defaultEventExecutorGroup（M1）处理。业务层根据RemotingCommand的请求码从processorTable找到processor，再把任务提交给相应的业务线程池（如sendMessageExecutor，即M2）。这些线程池承担不同阶段的工作，其具体数量和默认值属于版本相关的实现细节。
 
 线程数 | 线程名 | 线程具体说明
  --- | --- | --- 
@@ -145,7 +147,7 @@ M2 | RemotingExecutorThread_%d | 业务processor处理线程池
 
 ## 消息过滤
 
-RocketMQ分布式消息队列的消息过滤方式有别于其它MQ中间件，是在Consumer端订阅消息时再做消息过滤的。RocketMQ这么做是在于其Producer端写入消息和Consumer端订阅消息采用分离存储的机制来实现的，Consumer端订阅消息是需要通过ConsumeQueue这个消息消费的逻辑队列拿到一个索引，然后再从CommitLog里面读取真正的消息实体内容，所以说到底也是还绕不开其存储结构。其ConsumeQueue的存储结构如下，可以看到其中有8个字节存储的Message Tag的哈希值，基于Tag的消息过滤正式基于这个字段值的。
+RocketMQ 的 Tag 过滤利用 ConsumeQueue 条目中保存的 Tag 哈希值先在 Broker 端进行快速筛选，再读取 CommitLog 中的消息并做必要的精确匹配。哈希值可能冲突，因此它不是仅凭哈希就完成最终语义判断。SQL92 属性过滤也依赖 Broker 端开启相应支持。
 
 <img src="./image/4142cf740297db2ecdd8bf97cbbab157.png" />
 
@@ -254,7 +256,7 @@ RocketMQ将Op消息写入到全局一个特定的Topic中通过源码中的方�
 
 如果在RocketMQ事务消息的二阶段过程中失败了，例如在做Commit操作时，出现网络问题导致Commit失败，那么需要通过一定的策略使这条消息最终被Commit。RocketMQ采用了一种补偿机制，称为“回查”。Broker端对未确定状态的消息发起回查，将消息发送到对应的Producer端（同一个Group的Producer），由Producer根据消息来检查本地事务的状态，进而执行Commit或者Rollback。Broker端通过对比Half消息和Op消息进行事务消息的回查并且推进CheckPoint（记录那些事务消息的状态是确定的）。
 
-值得注意的是，rocketmq并不会无休止的的信息事务状态回查，默认回查15次，如果15次回查还是无法得知事务状态，rocketmq默认回滚该消息。
+值得注意的是，RocketMQ 不会无休止地回查事务状态。本文所述版本默认最多回查 15 次；超过检查次数后会按照 Broker 的事务检查策略处理，因此业务必须保证本地事务状态查询可重复、幂等，并对长期未知状态进行监控。
 
 ## 消息查询
 

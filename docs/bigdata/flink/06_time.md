@@ -18,7 +18,7 @@ Stream数据中的Time（时间）分为以下3种。
 
 ## Flink如何处理乱序数据
 
-在使用EventTime处理Stream数据的时候会遇到数据乱序的问题，流处理从Event（事件）产生，流经Source，再到Operator，这中间需要一定的时间。虽然大部分情况下，传输到Operator的数据都是按照事件产生的时间顺序来的，但是也不排除由于网络延迟等原因而导致乱序的产生，特别是使用Kafka的时候，多个分区之间的数据无法保证有序。因此，在进行Window计算的时候，不能无限期地等下去，必须要有个机制来保证在特定的时间后，必须触发Window进行计算，这个特别的机制就是Watermark。Watermark是用于处理乱序事件的。
+使用 Event Time 处理 Stream 时会遇到乱序。事件从产生、进入 Source 再到 Operator 需要时间；尤其是 Kafka 多分区输入，不同分区之间没有全局顺序。因此，Window 计算需要一种机制估计事件时间的推进程度，这就是 Watermark。Watermark 表示系统认为不再会出现时间戳小于等于该水位的大多数事件；当 Watermark 越过窗口结束时间时，事件时间窗口可以触发计算。它不能保证迟到事件绝不再到达，迟到数据仍需通过 allowed lateness、更新结果或侧输出等策略处理。
 
 ### Watermark
 
@@ -30,7 +30,7 @@ Watermark可以翻译为水位线，有3种应用场景。
 
 <img src="Flink/img/6be50c07ca3d5526c596a8d591547eda.png" />
 
-注意：在多并行度的情况下，Watermark会有一个对齐机制，这个对齐机制会取所有Channel中最小的Watermark，图8.5中的14和29这两个Watermark的最终取值为14。
+注意：算子有多个输入 Channel 时，其事件时间通常由各输入当前 Watermark 的最小值推进，避免越过较慢输入中仍可能到达的事件。这里是 Watermark 的最小值合并，不要与后续版本用于限制上下游快慢差异的“Watermark Alignment”功能混淆。空闲分区若不标记 idle，可能长期拖住整体 Watermark。
 
 ### Watermark的生成方式
 

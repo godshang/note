@@ -42,7 +42,7 @@ countWindow(100,10)方法表示Sliding Window的窗口大小是100个元素，�
 
 自定义 Window 可以分为两种：一种是基于 Key 的 Window，一种是不基于 Key 的Window。
 
-* .keyBy(...).widow(...) ：属于基于Key的Window，会先对窗口中的数据进行分组，然后再聚合。
+* `.keyBy(...).window(...)`：属于基于 Key 的 Window，会先按 key 分区，再分别聚合。
 * .windowAll(...) ：属于不基于Key的Window，会对窗口所有数据进行聚合。
 
 ## Window聚合分类
@@ -61,5 +61,5 @@ Window聚合操作分为两种：一种是增量聚合，一种是全量聚合�
 
 ### 全量聚合
 
-全量聚合指当属于窗口的数据到齐，才开始进行聚合计算，可以实现对窗口内的数据进行排序等需求。常见的全量聚合函数为apply(windowFunction)和process(processWindowFunction)。
+全量聚合会在窗口触发时遍历当前保存在窗口中的全部元素，可以实现排序等需要完整数据集的操作。对于无界流，系统无法知道数据是否“全部到齐”；事件时间窗口通常在 Watermark 越过窗口结束时间时触发，迟到数据是否继续更新结果取决于 allowed lateness 和 side output 等配置。常见全量函数为 `apply(WindowFunction)` 和 `process(ProcessWindowFunction)`。
 

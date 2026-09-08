@@ -231,7 +231,7 @@ public Release publish(Namespace namespace, String releaseName, String releaseCo
             return result;
         }
         ```
-    * 如果存在`grayDelKeys`，则从`configsToPublish`中移除对应配置项（TODO)
+    * 如果存在 `grayDelKeys`，则从 `configsToPublish` 中移除这些配置项。原因是合并时先复制了主干配置，再以灰度分支配置覆盖；仅删除分支 Item 不能表达“在灰度分支中删除继承自主干的 key”，因此需要单独传入删除集合并从最终快照中剔除。
     * 调用`branchRelease`创建分支Release
 
         ```java
@@ -373,10 +373,10 @@ public Release publish(Namespace namespace, String releaseName, String releaseCo
             }
             ```
 
-            * 参数`apollo.release-history.retention.size.override`可以设置是否清除ReleaseHistory，如果用户设置了这个值，那么会加入到`releaseClearQueue`队列中，由后台线程进行清理（TODO）
+            * `apollo.release-history.retention.size.override` 用于覆盖默认的发布历史保留数量。配置值与默认值不同时，新建的 `ReleaseHistory` 会被放入 `releaseClearQueue`，由后台清理任务异步删除超出保留上限的旧记录。`offer` 失败只记录警告，不影响当前发布历史入库，因此队列满时可能暂时保留更多历史记录。
 
 5. 回到`publish`方法，如果`parentNamespace`为空，说明是针对主干创建Release，继续下面流程
-6. 调用`namespaceService.findChildNamespace`查询子命名空间`childNamespace`（TODO）
+6. 调用 `namespaceService.findChildNamespace` 查询当前主干 Namespace 是否存在灰度分支。如果存在，发布主干前先保存主干的上一个 Release；主干发布成功后，再以这个旧快照为比较基准，把主干变化合并到灰度分支。
 7. 调用`masterRelease`方法创建主干Release，`findLatestActiveRelease`、`createRelease`、`createReleaseHistory`方法前文已经分析过了
 
     ```java
@@ -440,7 +440,7 @@ public Release publish(Namespace namespace, String releaseName, String releaseCo
     * 从`childNamespaceLatestActiveRelease`中解析出分支上一次发布的配置项快照`childReleaseConfiguration`
     * 调用`getBranchReleaseKeys`从发布历史中查找`branchReleaseKeys`
     * 从`masterPreviousRelease`中解析出主干上一次发布的配置项快照`parentNamespaceOldConfiguration`
-    * 调用`calculateChildNamespaceToPublishConfiguration`计算子命名空间待发布的配置项（TODO）
+    * 调用 `calculateChildNamespaceToPublishConfiguration` 计算分支的新快照：比较主干发布前后的配置，把主干新增、修改和删除同步到分支，同时保留 `branchReleaseKeys` 所标识的灰度覆盖项。这样主干发布不会覆盖分支主动修改的 key，也不会遗漏应继承的主干变化。
     * 最后调用`branchRelease`进行分支发布
 
 ### ReleaseRepository
