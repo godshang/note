@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>分布式锁 | 开发者笔记</title>
+    <meta name="generator" content="VuePress 1.9.10">
+    
+    <meta name="description" content="">
+    
+    <link rel="preload" href="/note/assets/css/0.styles.fa566ad0.css" as="style"><link rel="preload" href="/note/assets/js/app.559c996e.js" as="script"><link rel="preload" href="/note/assets/js/2.7b239f4c.js" as="script"><link rel="preload" href="/note/assets/js/1.51e4995c.js" as="script"><link rel="preload" href="/note/assets/js/114.4a963d2b.js" as="script"><link rel="prefetch" href="/note/assets/js/10.555b32ff.js"><link rel="prefetch" href="/note/assets/js/100.c3e184b5.js"><link rel="prefetch" href="/note/assets/js/101.adff6838.js"><link rel="prefetch" href="/note/assets/js/102.849596a8.js"><link rel="prefetch" href="/note/assets/js/103.6b5cec66.js"><link rel="prefetch" href="/note/assets/js/104.e277db05.js"><link rel="prefetch" href="/note/assets/js/105.7027a96a.js"><link rel="prefetch" href="/note/assets/js/106.a04afafa.js"><link rel="prefetch" href="/note/assets/js/107.24361ea7.js"><link rel="prefetch" href="/note/assets/js/108.e1c3f5c5.js"><link rel="prefetch" href="/note/assets/js/109.c1be6700.js"><link rel="prefetch" href="/note/assets/js/11.fb062693.js"><link rel="prefetch" href="/note/assets/js/110.1fbdfbf7.js"><link rel="prefetch" href="/note/assets/js/111.aaa57aa9.js"><link rel="prefetch" href="/note/assets/js/112.070ee965.js"><link rel="prefetch" href="/note/assets/js/113.b9966cb0.js"><link rel="prefetch" href="/note/assets/js/115.a13f778f.js"><link rel="prefetch" href="/note/assets/js/116.ac516035.js"><link rel="prefetch" href="/note/assets/js/117.1cad6e0a.js"><link rel="prefetch" href="/note/assets/js/118.5b1d013c.js"><link rel="prefetch" href="/note/assets/js/119.267100fc.js"><link rel="prefetch" href="/note/assets/js/12.1b649a19.js"><link rel="prefetch" href="/note/assets/js/120.552e5379.js"><link rel="prefetch" href="/note/assets/js/13.259177d3.js"><link rel="prefetch" href="/note/assets/js/14.f9046e47.js"><link rel="prefetch" href="/note/assets/js/15.3af5a383.js"><link rel="prefetch" href="/note/assets/js/16.5d953b41.js"><link rel="prefetch" href="/note/assets/js/17.afc0ebd8.js"><link rel="prefetch" href="/note/assets/js/18.831fa1a4.js"><link rel="prefetch" href="/note/assets/js/19.a6dff0f2.js"><link rel="prefetch" href="/note/assets/js/20.e9b00b2d.js"><link rel="prefetch" href="/note/assets/js/21.3c444798.js"><link rel="prefetch" href="/note/assets/js/22.651ef6b6.js"><link rel="prefetch" href="/note/assets/js/23.57be4272.js"><link rel="prefetch" href="/note/assets/js/24.69ce0e0c.js"><link rel="prefetch" href="/note/assets/js/25.1b4ea4a7.js"><link rel="prefetch" href="/note/assets/js/26.c7d394e0.js"><link rel="prefetch" href="/note/assets/js/27.b67f9ce5.js"><link rel="prefetch" href="/note/assets/js/28.1b0ec007.js"><link rel="prefetch" href="/note/assets/js/29.4b7f809c.js"><link rel="prefetch" href="/note/assets/js/3.922513d5.js"><link rel="prefetch" href="/note/assets/js/30.1ed8e811.js"><link rel="prefetch" href="/note/assets/js/31.80ce30c6.js"><link rel="prefetch" href="/note/assets/js/32.a0803629.js"><link rel="prefetch" href="/note/assets/js/33.7a94eaca.js"><link rel="prefetch" href="/note/assets/js/34.49932ce5.js"><link rel="prefetch" href="/note/assets/js/35.f46213e9.js"><link rel="prefetch" href="/note/assets/js/36.83da0a54.js"><link rel="prefetch" href="/note/assets/js/37.4bcaaba8.js"><link rel="prefetch" href="/note/assets/js/38.cbf5c1ef.js"><link rel="prefetch" href="/note/assets/js/39.95b7b6ef.js"><link rel="prefetch" href="/note/assets/js/4.7f32a226.js"><link rel="prefetch" href="/note/assets/js/40.aacc67a1.js"><link rel="prefetch" href="/note/assets/js/41.5c107eea.js"><link rel="prefetch" href="/note/assets/js/42.ce11354f.js"><link rel="prefetch" href="/note/assets/js/43.7359c05b.js"><link rel="prefetch" href="/note/assets/js/44.2534a054.js"><link rel="prefetch" href="/note/assets/js/45.9c6938f0.js"><link rel="prefetch" href="/note/assets/js/46.7ee0a1b5.js"><link rel="prefetch" href="/note/assets/js/47.3fddf95f.js"><link rel="prefetch" href="/note/assets/js/48.d9d4c869.js"><link rel="prefetch" href="/note/assets/js/49.7ef0d214.js"><link rel="prefetch" href="/note/assets/js/5.27e38e77.js"><link rel="prefetch" href="/note/assets/js/50.c0f411b1.js"><link rel="prefetch" href="/note/assets/js/51.1113abd3.js"><link rel="prefetch" href="/note/assets/js/52.91425470.js"><link rel="prefetch" href="/note/assets/js/53.53ec723e.js"><link rel="prefetch" href="/note/assets/js/54.8ca2e1bb.js"><link rel="prefetch" href="/note/assets/js/55.3499cc02.js"><link rel="prefetch" href="/note/assets/js/56.96959ddc.js"><link rel="prefetch" href="/note/assets/js/57.d037b3bd.js"><link rel="prefetch" href="/note/assets/js/58.62b3c03d.js"><link rel="prefetch" href="/note/assets/js/59.cae6b963.js"><link rel="prefetch" href="/note/assets/js/6.eeaf7e02.js"><link rel="prefetch" href="/note/assets/js/60.a5b695e1.js"><link rel="prefetch" href="/note/assets/js/61.07a1504c.js"><link rel="prefetch" href="/note/assets/js/62.182d797f.js"><link rel="prefetch" href="/note/assets/js/63.e8305137.js"><link rel="prefetch" href="/note/assets/js/64.66ca54af.js"><link rel="prefetch" href="/note/assets/js/65.e2788e63.js"><link rel="prefetch" href="/note/assets/js/66.5a3b5360.js"><link rel="prefetch" href="/note/assets/js/67.c869e9b2.js"><link rel="prefetch" href="/note/assets/js/68.76a69ace.js"><link rel="prefetch" href="/note/assets/js/69.372f9069.js"><link rel="prefetch" href="/note/assets/js/7.97a5d920.js"><link rel="prefetch" href="/note/assets/js/70.11770612.js"><link rel="prefetch" href="/note/assets/js/71.90b1ef0e.js"><link rel="prefetch" href="/note/assets/js/72.71a01a3f.js"><link rel="prefetch" href="/note/assets/js/73.4c990a56.js"><link rel="prefetch" href="/note/assets/js/74.3c78def5.js"><link rel="prefetch" href="/note/assets/js/75.f552a866.js"><link rel="prefetch" href="/note/assets/js/76.d09e3826.js"><link rel="prefetch" href="/note/assets/js/77.5c38a9b2.js"><link rel="prefetch" href="/note/assets/js/78.67ade579.js"><link rel="prefetch" href="/note/assets/js/79.a3a6a592.js"><link rel="prefetch" href="/note/assets/js/80.3676f009.js"><link rel="prefetch" href="/note/assets/js/81.ae7cb24c.js"><link rel="prefetch" href="/note/assets/js/82.3ec7b488.js"><link rel="prefetch" href="/note/assets/js/83.41ad2d0d.js"><link rel="prefetch" href="/note/assets/js/84.44bc075e.js"><link rel="prefetch" href="/note/assets/js/85.351f2222.js"><link rel="prefetch" href="/note/assets/js/86.61b69f59.js"><link rel="prefetch" href="/note/assets/js/87.56fc79e2.js"><link rel="prefetch" href="/note/assets/js/88.5cc9782e.js"><link rel="prefetch" href="/note/assets/js/89.b3ed1d2e.js"><link rel="prefetch" href="/note/assets/js/90.bbe13bce.js"><link rel="prefetch" href="/note/assets/js/91.7982cb41.js"><link rel="prefetch" href="/note/assets/js/92.5a927c7d.js"><link rel="prefetch" href="/note/assets/js/93.6497e2a1.js"><link rel="prefetch" href="/note/assets/js/94.e5dc9a36.js"><link rel="prefetch" href="/note/assets/js/95.1bd628b6.js"><link rel="prefetch" href="/note/assets/js/96.2ef5f91b.js"><link rel="prefetch" href="/note/assets/js/97.1e319e55.js"><link rel="prefetch" href="/note/assets/js/98.21ed19cf.js"><link rel="prefetch" href="/note/assets/js/99.35311b29.js"><link rel="prefetch" href="/note/assets/js/vendors~docsearch.69e677f0.js">
+    <link rel="stylesheet" href="/note/assets/css/0.styles.fa566ad0.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/note/" class="home-link router-link-active"><!----> <span class="site-name">开发者笔记</span></a> <div class="links"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/note/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Java" class="dropdown-title"><span class="title">Java</span> <span class="arrow down"></span></button> <button type="button" aria-label="Java" class="mobile-dropdown-title"><span class="title">Java</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/java/base/basic.html" class="nav-link">
+  Java基础
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/collection/ArrayList.html" class="nav-link">
+  Java集合框架
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/concurrent/Theory.html" class="nav-link">
+  Java并发编程
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/jvm/memory.html" class="nav-link">
+  JVM相关
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/nio/io.html" class="nav-link">
+  Java NIO相关
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="数据存储" class="dropdown-title"><span class="title">数据存储</span> <span class="arrow down"></span></button> <button type="button" aria-label="数据存储" class="mobile-dropdown-title"><span class="title">数据存储</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/storage/database/mysql.html" class="nav-link">
+  MySQL
+</a></li><li class="dropdown-item"><!----> <a href="/note/storage/redis/redis-question.html" class="nav-link">
+  Redis
+</a></li><li class="dropdown-item"><!----> <a href="/note/storage/mq/kafka-intro.html" class="nav-link">
+  消息队列
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="框架" class="dropdown-title"><span class="title">框架</span> <span class="arrow down"></span></button> <button type="button" aria-label="框架" class="mobile-dropdown-title"><span class="title">框架</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/framework/spring-framework/spring-framework-intro.html" class="nav-link">
+  Spring框架
+</a></li><li class="dropdown-item"><!----> <a href="/note/framework/netty/netty-business-logic.html" class="nav-link">
+  Netty
+</a></li><li class="dropdown-item"><!----> <a href="/note/framework/apollo/setup-debug-enviroment.html" class="nav-link">
+  Apollo源码分析
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="架构" class="dropdown-title"><span class="title">架构</span> <span class="arrow down"></span></button> <button type="button" aria-label="架构" class="mobile-dropdown-title"><span class="title">架构</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/arch/system-design/01-scale-from-zero.html" class="nav-link">
+  系统设计
+</a></li><li class="dropdown-item"><!----> <a href="/note/arch/case-study/rate-limiter.html" class="nav-link">
+  案例
+</a></li></ul></div></div> <!----></nav></div></header> <div class="sidebar-mask"></div> <aside class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/note/" class="nav-link">
+  Home
+</a></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="Java" class="dropdown-title"><span class="title">Java</span> <span class="arrow down"></span></button> <button type="button" aria-label="Java" class="mobile-dropdown-title"><span class="title">Java</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/java/base/basic.html" class="nav-link">
+  Java基础
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/collection/ArrayList.html" class="nav-link">
+  Java集合框架
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/concurrent/Theory.html" class="nav-link">
+  Java并发编程
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/jvm/memory.html" class="nav-link">
+  JVM相关
+</a></li><li class="dropdown-item"><!----> <a href="/note/java/nio/io.html" class="nav-link">
+  Java NIO相关
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="数据存储" class="dropdown-title"><span class="title">数据存储</span> <span class="arrow down"></span></button> <button type="button" aria-label="数据存储" class="mobile-dropdown-title"><span class="title">数据存储</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/storage/database/mysql.html" class="nav-link">
+  MySQL
+</a></li><li class="dropdown-item"><!----> <a href="/note/storage/redis/redis-question.html" class="nav-link">
+  Redis
+</a></li><li class="dropdown-item"><!----> <a href="/note/storage/mq/kafka-intro.html" class="nav-link">
+  消息队列
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="框架" class="dropdown-title"><span class="title">框架</span> <span class="arrow down"></span></button> <button type="button" aria-label="框架" class="mobile-dropdown-title"><span class="title">框架</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/framework/spring-framework/spring-framework-intro.html" class="nav-link">
+  Spring框架
+</a></li><li class="dropdown-item"><!----> <a href="/note/framework/netty/netty-business-logic.html" class="nav-link">
+  Netty
+</a></li><li class="dropdown-item"><!----> <a href="/note/framework/apollo/setup-debug-enviroment.html" class="nav-link">
+  Apollo源码分析
+</a></li></ul></div></div><div class="nav-item"><div class="dropdown-wrapper"><button type="button" aria-label="架构" class="dropdown-title"><span class="title">架构</span> <span class="arrow down"></span></button> <button type="button" aria-label="架构" class="mobile-dropdown-title"><span class="title">架构</span> <span class="arrow right"></span></button> <ul class="nav-dropdown" style="display:none;"><li class="dropdown-item"><!----> <a href="/note/arch/system-design/01-scale-from-zero.html" class="nav-link">
+  系统设计
+</a></li><li class="dropdown-item"><!----> <a href="/note/arch/case-study/rate-limiter.html" class="nav-link">
+  案例
+</a></li></ul></div></div> <!----></nav>  <ul class="sidebar-links"><li><section class="sidebar-group depth-0"><p class="sidebar-heading open"><span>Redis详解</span> <!----></p> <ul class="sidebar-links sidebar-group-items"><li><a href="/note/storage/redis/redis-question.html" class="sidebar-link">Redis常见问题</a></li><li><a href="/note/storage/redis/redis-data-structure.html" class="sidebar-link">Redis数据结构</a></li><li><a href="/note/storage/redis/redis-persistence.html" class="sidebar-link">Redis持久化</a></li><li><a href="/note/storage/redis/redis-tx.html" class="sidebar-link">Redis事务</a></li><li><a href="/note/storage/redis/redis-lock.html" aria-current="page" class="active sidebar-link">分布式锁</a></li><li><a href="/note/storage/redis/redis-mq.html" class="sidebar-link">消息队列</a></li><li><a href="/note/storage/redis/redis-bloom-filter.html" class="sidebar-link">布隆过滤器</a></li><li><a href="/note/storage/redis/redis-scan.html" class="sidebar-link">Scan</a></li></ul></section></li></ul> </aside> <main class="page"> <div class="theme-default-content content__default"><h1 id="分布式锁"><a href="#分布式锁" class="header-anchor">#</a> 分布式锁</h1> <p>Redis实现分布式锁一般是使用<code>setnx</code>指令，只允许一个客户端占有，先来先占，用完之后使用<code>del</code>指令释放锁。</p> <div class="language- extra-class"><pre class="language-text"><code>&gt; setnx lock_name true
+(integer) 1
+... do something ...
+&gt; del lock_name
+(integer) 1
+</code></pre></div><p>这样会存在一个问题，如果逻辑执行中间出现异常，可能会导致<code>del</code>指令没有被执行，这样会陷入死锁，锁永远不会释放。</p> <p>可以为锁设置一个过期时间，这样即使中间出现异常也可以保证过期之后锁会自动释放。</p> <div class="language- extra-class"><pre class="language-text"><code>&gt; setnx lock_name true
+OK
+&gt; expire lock_name 5
+... do something ...
+&gt; del lock_name
+(integer) 1
+</code></pre></div><p>这又会引入一个新的问题，如果在<code>setnx</code>和<code>expire</code>两条指令中间服务器进程突然挂掉，就会导致<code>expire</code>指令无法执行，也会造成死锁。</p> <p>这个问题的根源在于<code>setnx</code>和<code>expire</code>两条指令不是原子指令。Redis事务无法解决这个问题，因为<code>expire</code>指令依赖于<code>setnx</code>指令的执行结果，如果<code>setnx</code>没有抢到锁，是不应该执行<code>expire</code>指令的。Redis事务没有<code>if-else</code>的逻辑，事务是一口气执行完，要么都执行要么都不执行。</p> <p>Redis 2.6.12 起，<code>SET</code> 支持 <code>NX</code> 和过期时间参数，可以在一条原子命令中同时完成“仅当 key 不存在时写入”和“设置租约时间”。</p> <div class="language- extra-class"><pre class="language-text"><code>&gt; set lock_name true ex 5 nx
+OK
+... do something ...
+&gt; del lock_name
+(integer) 1
+</code></pre></div><h2 id="超时问题"><a href="#超时问题" class="header-anchor">#</a> 超时问题</h2> <p>Redis 的分布式锁不能解决超时问题，如果在加锁和释放锁之间的逻辑执行的太长，以至于超出了锁的超时限制，就会出现问题。因为这时候锁过期了，第二个线程重新持有了这把锁，但是紧接着第一个线程执行完了业务逻辑，就把锁给释放了，第三个线程就会在第二个线程逻辑执行完之间拿到了锁。</p> <p>为了避免这个问题，应让锁的有效期覆盖正常业务执行时间，并在业务侧设置超时。需要执行较久的任务时，可以使用经过验证的续期机制，但仍要处理进程长暂停、网络分区和续期失败。对于不能容忍并发写入的下游资源，还应使用单调递增的 fencing token，让资源端拒绝旧持有者的迟到请求。</p> <p>有一个更加安全的方案是为 set 指令的 value 参数设置为一个随机数，释放锁时先匹配随机数是否一致，然后再删除 key。但是匹配 value 和删除 key 不是一个原子操作，Redis 也没有提供类似于 delifequals 这样的指令，这就需要使用 Lua 脚本来处理了，因为 Lua 脚本可以保证连续多个指令的原子性执行。</p> <div class="language- extra-class"><pre class="language-text"><code>tag = random.nextint()  # 随机数
+if redis.set(key, tag, nx=True, ex=5):
+    do_something()
+    redis.delifequals(key, tag)  # 假象的 delifequals 指令
+
+# delifequals
+if redis.call(&quot;get&quot;,KEYS[1]) == ARGV[1] then
+    return redis.call(&quot;del&quot;,KEYS[1]) 
+else
+    return 0 
+end
+</code></pre></div><h2 id="可重入性"><a href="#可重入性" class="header-anchor">#</a> 可重入性</h2> <p>可重入性是指线程在持有锁的情况下再次请求加锁，如果一个锁支持同一个线程的多次加锁，那么这个锁就是可重入的。比如 Java 语言里有个 ReentrantLock 就是可重入锁。Redis 分布式锁如果要支持可重入，需要对客户端的 set 方法进行包装，使用线程的 Threadlocal 变量存储当前持有锁的计数。</p> <p>精确一点还需要考虑内存锁计数的过期时间，代码复杂度将会继续升高。实践中不推荐使用可重入锁，它加重了客户端的复杂性，在编写业务方法时注意在逻辑结构上进行调整完全可以不使用可重入锁。</p> <h2 id="集群环境下的问题"><a href="#集群环境下的问题" class="header-anchor">#</a> 集群环境下的问题</h2> <p>比如在Sentinel集群中，主节点挂点后，从节点会取而代之。假设第一个客户端在主节点中申请成功了一把锁，但是这把锁还没有来得及同步到从节点，主节点就挂掉了。然后从节点变成了主节点，这个新的节点内部还没有这把锁，所以当另一个客户端过来请求加锁时，就被批准了。这样就会导致系统中同一把锁被两个客户端同时持有。</p> <p>这种情况发生在主从复制尚未完成便发生故障转移时。持续时间短并不代表可以忽略：是否能够容忍取决于业务对互斥失效的后果要求。</p> <p>Redlock 试图通过多个彼此独立的 Redis 主节点降低单点故障转移带来的互斥失效风险。客户端需要在多数节点上使用同一随机值取得锁，并确认获取多数锁所耗费的时间小于锁的有效期；失败或释放时应在所有节点上执行带所有者校验的删除。该算法依赖本地时钟漂移有界等假设，也存在公开争议。对正确性要求很高的场景，不能只写成“多数节点 <code>SETNX</code> 成功”就认为万无一失，应结合业务后果选择具备共识语义的协调系统或在资源端增加 fencing token。</p></div> <footer class="page-edit"><!----> <!----></footer> <div class="page-nav"><p class="inner"><span class="prev">
+      ←
+      <a href="/note/storage/redis/redis-tx.html" class="prev">
+        Redis事务
+      </a></span> <span class="next"><a href="/note/storage/redis/redis-mq.html">
+        消息队列
+      </a>
+      →
+    </span></p></div> </main></div><div class="global-ui"></div></div>
+    <script src="/note/assets/js/app.559c996e.js" defer></script><script src="/note/assets/js/2.7b239f4c.js" defer></script><script src="/note/assets/js/1.51e4995c.js" defer></script><script src="/note/assets/js/114.4a963d2b.js" defer></script>
+  </body>
+</html>
